@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import VideoEmbed, { getArticleVideoUrl } from '../components/VideoEmbed';
 import { getArticleById } from '../lib/api';
 import { formatRelativeTime, getArticleTimestamp } from '../lib/time';
 
@@ -52,6 +53,7 @@ export default function ArticleDetail() {
     ? new Intl.DateTimeFormat('hi-IN', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(timestamp))
     : '';
   const relativeTime = formatRelativeTime(timestamp);
+  const videoUrl = getArticleVideoUrl(article);
 
   return (
     <section className="page-grid" style={{ gridTemplateColumns: '1fr' }}>
@@ -65,6 +67,7 @@ export default function ArticleDetail() {
             {publishDate ? ` • ${publishDate}` : ''}
             {article.author ? ` ➻ ${article.author}` : ''}
           </small>
+          {videoUrl ? <VideoEmbed url={videoUrl} /> : null}
           {article.content ? <div>{article.content}</div> : null}
         </div>
       </article>
