@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Navigate, NavLink, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { Clock3, Download, Facebook, Instagram, Mail, MapPin, Newspaper, Phone, Search, Twitter, X, Youtube } from 'lucide-react';
 import ProtectedRoute from './components/ProtectedRoute';
 import { getArticles, getEPapers, getTicker } from './lib/api';
@@ -26,22 +27,37 @@ const seedTickers = [
 
 const defaultEPaper = { title: 'आज का अखबार - 9 मई 2026', issue_date: '2026-05-09', image_url: '/epaper-cover.svg', pdf_url: '#', is_active: true };
 
-function App() {
-  const [route, setRoute] = useState(location.pathname);
+const navItems = [
+  { label: 'होम', to: '/' },
+  { label: 'फरीदाबाद', to: '/category/faridabad' },
+  { label: 'हरियाणा', to: '/category/haryana' },
+  { label: 'क्रिकेट', to: '/category/cricket' },
+  { label: 'मनोरंजन', to: '/category/manoranjan' },
+  { label: 'राष्ट्रीय', to: '/category/rashtriya' },
+  { label: 'अंतर्राष्ट्रीय', to: '/category/antarrashtriya' },
+  { label: 'वीडियो न्यूज़', to: '/videos' },
+];
+
+const slugToCategory = {
+  faridabad: 'फरीदाबाद',
+  haryana: 'हरियाणा',
+  cricket: 'क्रिकेट',
+  manoranjan: 'मनोरंजन',
+  rashtriya: 'राष्ट्रीय',
+  antarrashtriya: 'अंतर्राष्ट्रीय',
+};
+
+function AppShell() {
   const [query, setQuery] = useState('');
   const [now, setNow] = useState(new Date());
   const [popup, setPopup] = useState(false);
   const [epaper, setEPaper] = useState(defaultEPaper);
   const [siteArticles, setSiteArticles] = useState(seedArticles);
   const [tickers, setTickers] = useState(seedTickers);
-  const isAdmin = route === '/admin';
-  const isLogin = route === '/login';
 
   useEffect(() => {
     const tick = setInterval(() => setNow(new Date()), 1000);
-    const onPop = () => setRoute(location.pathname);
-    addEventListener('popstate', onPop);
-    return () => { clearInterval(tick); removeEventListener('popstate', onPop); };
+    return () => clearInterval(tick);
   }, []);
 
   useEffect(() => {
@@ -63,40 +79,24 @@ function App() {
 
   useEffect(() => {
     const last = Number(localStorage.getItem('sjt_epaper_popup_seen') || 0);
-    if (!isAdmin && !isLogin && Date.now() - last > 10 * 60 * 60 * 1000) {
+    if (Date.now() - last > 10 * 60 * 60 * 1000) {
       const id = setTimeout(() => setPopup(true), 600);
       return () => clearTimeout(id);
     }
-  }, [isAdmin, isLogin]);
-
-  function navigate(path) {
-    history.pushState(null, '', path);
-    setRoute(path);
-  }
-
-  if (isLogin) return <Login navigate={navigate} />;
-  if (isAdmin) return <ProtectedRoute navigate={navigate}><AdminPage navigate={navigate} /></ProtectedRoute>;
+  }, []);
 
   return (
     <>
-      <Header now={now} query={query} setQuery={setQuery} go={navigate} />
+      <Header now={now} query={query} setQuery={setQuery} />
       <Ticker tickers={tickers} />
       <main>
         <section className="epaper-strip"><button onClick={() => setPopup(true)}><Newspaper /> 📰 आज का अखबार</button></section>
-        <section className="page-grid">
-          <div>
-            <section className="lead-grid">
-              <Lead article={siteArticles[0]} large />
-              <div className="side-leads"><Lead article={siteArticles[1]} /><Lead article={siteArticles[2]} /></div>
-            </section>
-            <h2 className="section-title">ब्रेकिंग न्यूज़</h2>
-            <div className="cards">{siteArticles.filter((item) => item.is_breaking).map((item) => <Card key={item.id} article={item} />)}</div>
-            {['फरीदाबाद', 'हरियाणा', 'राष्ट्रीय', 'अंतर्राष्ट्रीय', 'क्रिकेट', 'मनोरंजन'].map((cat) => (
-              <section key={cat}><h2 className="section-title">{cat}</h2><div className="cards">{siteArticles.filter((item) => item.category === cat).map((item) => <Card key={item.id} article={item} />)}</div></section>
-            ))}
-          </div>
-          <aside className="latest"><h2>ताज़ा खबरें</h2>{siteArticles.map((item) => <Card key={item.id} article={item} small />)}</aside>
-        </section>
+        <Routes>
+          <Route path="/" element={<HomePage articles={siteArticles} />} />
+          <Route path="/category/:slug" element={<CategoryPage articles={siteArticles} />} />
+          <Route path="/videos" element={<VideosPage articles={siteArticles} />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
       <Footer />
       {popup && <EPaperPopup epaper={epaper} onClose={() => { localStorage.setItem('sjt_epaper_popup_seen', String(Date.now())); setPopup(false); }} />}
@@ -104,11 +104,75 @@ function App() {
   );
 }
 
-function Header({ now, query, setQuery, go }) {
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginRoute />} />
+        <Route path="/admin" element={<AdminRoute />} />
+        <Route path="/*" element={<AppShell />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+function LoginRoute() {
+  const navigate = useNavigate();
+  return <Login navigate={navigate} />;
+}
+
+function AdminRoute() {
+  const navigate = useNavigate();
+  return <ProtectedRoute navigate={navigate}><AdminPage navigate={navigate} /></ProtectedRoute>;
+}
+
+function HomePage({ articles }) {
+  return <NewsLayout articles={articles} mainArticles={articles} />;
+}
+
+function CategoryPage({ articles }) {
+  const { slug } = useParams();
+  const category = slugToCategory[slug];
+  if (!category) return <Navigate to="/" replace />;
+  const filtered = articles.filter((item) => item.category === category);
+  return <NewsLayout articles={articles} mainArticles={filtered} heading={category} />;
+}
+
+function VideosPage({ articles }) {
+  const filtered = articles.filter((item) => item.category === 'वीडियो न्यूज़' || item.video_url);
+  return <NewsLayout articles={articles} mainArticles={filtered} heading="वीडियो न्यूज़" />;
+}
+
+function NewsLayout({ articles, mainArticles, heading }) {
+  const visibleArticles = mainArticles.length ? mainArticles : [];
+  return (
+    <section className="page-grid">
+      <div>
+        {heading ? <h1 className="section-title page-heading">{heading}</h1> : (
+          <section className="lead-grid">
+            <Lead article={articles[0]} large />
+            <div className="side-leads"><Lead article={articles[1]} /><Lead article={articles[2]} /></div>
+          </section>
+        )}
+        {!heading && <h2 className="section-title">ब्रेकिंग न्यूज़</h2>}
+        {!heading && <div className="cards">{articles.filter((item) => item.is_breaking).map((item) => <Card key={item.id} article={item} />)}</div>}
+        {heading ? (
+          visibleArticles.length ? <div className="cards">{visibleArticles.map((item) => <Card key={item.id} article={item} />)}</div> : <p className="empty-state">इस सेक्शन में अभी कोई खबर उपलब्ध नहीं है।</p>
+        ) : ['फरीदाबाद', 'हरियाणा', 'राष्ट्रीय', 'अंतर्राष्ट्रीय', 'क्रिकेट', 'मनोरंजन'].map((cat) => (
+          <section key={cat}><h2 className="section-title">{cat}</h2><div className="cards">{articles.filter((item) => item.category === cat).map((item) => <Card key={item.id} article={item} />)}</div></section>
+        ))}
+      </div>
+      <aside className="latest"><h2>ताज़ा खबरें</h2>{articles.map((item) => <Card key={item.id} article={item} small />)}</aside>
+    </section>
+  );
+}
+
+function Header({ now, query, setQuery }) {
   const date = new Intl.DateTimeFormat('hi-IN', { day: 'numeric', month: 'long', year: 'numeric' }).format(now);
   const time = new Intl.DateTimeFormat('hi-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(now);
-  return <header><div className="topbar"><div><span className="live-dot" /> <b>लाइव</b> <b>सत्य का प्रहरी आपके हाथ</b></div><div><span className="weather">☼ फरीदाबाद 28°C, साफ मौसम</span><Clock3 size={16} /> <b>{time}</b> <b>{date}</b></div></div><div className="masthead"><img src={logo} /><div className="brand"><h1>सत्यजय टाइम्स</h1><p>Satyajay Times</p><strong>➻ हिंदी दैनिक समाचार पत्र</strong></div><form onSubmit={(event) => event.preventDefault()} className="search"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="खोजें..." /><Search /></form><div className="date-box"><b>तारीख {date}</b><b>समय {time}</b></div></div><nav>{['होम', 'फरीदाबाद', 'हरियाणा', 'क्रिकेट', 'मनोरंजन', 'राष्ट्रीय', 'अंतर्राष्ट्रीय', 'वीडियो न्यूज़'].map((item) => <button key={item} onClick={() => item === 'होम' && go('/')}>{item}</button>)}</nav></header>;
+  return <header><div className="topbar"><div><span className="live-dot" /> <b>लाइव</b> <b>सत्य का प्रहरी आपके हाथ</b></div><div><span className="weather">☼ फरीदाबाद 28°C, साफ मौसम</span><Clock3 size={16} /> <b>{time}</b> <b>{date}</b></div></div><div className="masthead"><img src={logo} /><div className="brand"><h1>सत्यजय टाइम्स</h1><p>Satyajay Times</p><strong>➻ हिंदी दैनिक समाचार पत्र</strong></div><form onSubmit={(event) => event.preventDefault()} className="search"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="खोजें..." /><Search /></form><div className="date-box"><b>तारीख {date}</b><b>समय {time}</b></div></div><nav>{navItems.map((item) => <NavLink key={item.to} to={item.to} end={item.to === '/'}>{item.label}</NavLink>)}</nav></header>;
 }
+
 function Ticker({ tickers }) {
   const safeTickers = tickers.map((item) => typeof item === 'string' ? item : item?.text).filter(Boolean);
   return <div className="ticker"><b>🔴 ब्रेकिंग</b><marquee>{safeTickers.join('   •   ')}</marquee></div>;
