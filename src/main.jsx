@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Link, Navigate, NavLink, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { BrowserRouter, Link, Navigate, NavLink, Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Clock3, Download, Facebook, Instagram, Mail, MapPin, Newspaper, Phone, Search, Twitter, X, Youtube } from 'lucide-react';
 import ProtectedRoute from './components/ProtectedRoute';
 import { getArticles, getEPapers, getTicker } from './lib/api';
 import Login from './pages/Login';
 import AdminPage from './pages/Admin';
 import ArticleDetail from './pages/ArticleDetail';
+import { searchArticles } from './lib/search';
 import { formatRelativeTime, getArticleTimestamp } from './lib/time';
+import { formatWeatherLabel, useWeather } from './lib/weather';
 import './style.css';
 
 const logo = '/satyajay-logo.jpg';
@@ -98,6 +100,7 @@ function AppShell() {
           <Route path="/category/:slug" element={<CategoryPage articles={siteArticles} />} />
           <Route path="/videos" element={<VideosPage articles={siteArticles} />} />
           <Route path="/article/:id" element={<ArticleDetail />} />
+          <Route path="/search" element={<SearchPage articles={siteArticles} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -146,6 +149,37 @@ function VideosPage({ articles }) {
   return <NewsLayout articles={articles} mainArticles={filtered} heading="वीडियो न्यूज़" />;
 }
 
+function SearchPage({ articles }) {
+  const [searchParams] = useSearchParams();
+  const query = searchParams.get('q') || '';
+  const results = useMemo(() => searchArticles(articles, query), [articles, query]);
+
+  return (
+    <section className="page-grid">
+      <div>
+        <h1 className="section-title page-heading">
+          {query ? `खोज परिणाम: ${query}` : 'खोज परिणाम'}
+        </h1>
+        {results.length ? (
+          <div className="cards">
+            {results.map((item) => (
+              <Card key={item.id} article={item} />
+            ))}
+          </div>
+        ) : (
+          <p className="empty-state">कोई परिणाम नहीं मिला</p>
+        )}
+      </div>
+      <aside className="latest">
+        <h2>ताज़ा खबरें</h2>
+        {articles.map((item) => (
+          <Card key={item.id} article={item} small />
+        ))}
+      </aside>
+    </section>
+  );
+}
+
 function NewsLayout({ articles, mainArticles, heading }) {
   const visibleArticles = mainArticles.length ? mainArticles : [];
   return (
@@ -173,7 +207,18 @@ function NewsLayout({ articles, mainArticles, heading }) {
 function Header({ now, query, setQuery }) {
   const date = new Intl.DateTimeFormat('hi-IN', { day: 'numeric', month: 'long', year: 'numeric' }).format(now);
   const time = new Intl.DateTimeFormat('hi-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(now);
-  return <header><div className="topbar"><div><span className="live-dot" /> <b>लाइव</b> <b>सत्य का प्रहरी आपके हाथ</b></div><div><span className="weather">☼ फरीदाबाद 28°C, साफ मौसम</span><Clock3 size={16} /> <b>{time}</b> <b>{date}</b></div></div><div className="masthead"><img src={logo} /><div className="brand"><h1>सत्यजय टाइम्स</h1><p>Satyajay Times</p><strong>➻ हिंदी दैनिक समाचार पत्र</strong></div><form onSubmit={(event) => event.preventDefault()} className="search"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="खोजें..." /><Search /></form><div className="date-box"><b>तारीख {date}</b><b>समय {time}</b></div></div><nav>{navItems.map((item) => <NavLink key={item.to} to={item.to} end={item.to === '/'}>{item.label}</NavLink>)}</nav></header>;
+  const navigate = useNavigate();
+  const weather = useWeather();
+  const weatherLabel = formatWeatherLabel(weather);
+
+  function handleSearchSubmit(event) {
+    event.preventDefault();
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    navigate(`/search?q=${encodeURIComponent(trimmed)}`);
+  }
+
+  return <header><div className="topbar"><div><span className="live-dot" /> <b>लाइव</b> <b>सत्य का प्रहरी आपके हाथ</b></div><div><span className="weather">{weatherLabel}</span><Clock3 size={16} /> <b>{time}</b> <b>{date}</b></div></div><div className="masthead"><img src={logo} /><div className="brand"><h1>सत्यजय टाइम्स</h1><p>Satyajay Times</p><strong>➻ हिंदी दैनिक समाचार पत्र</strong></div><form onSubmit={handleSearchSubmit} className="search"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="खोजें..." /><Search /></form><div className="date-box"><b>तारीख {date}</b><b>समय {time}</b></div></div><nav>{navItems.map((item) => <NavLink key={item.to} to={item.to} end={item.to === '/'}>{item.label}</NavLink>)}</nav></header>;
 }
 
 function Ticker({ tickers }) {
