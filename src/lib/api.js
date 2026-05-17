@@ -33,6 +33,18 @@ export async function getArticles() {
   return data || [];
 }
 
+export async function getArticleById(id) {
+  requireSupabase();
+  const { data, error } = await supabase
+    .from('articles')
+    .select('*')
+    .eq('id', id)
+    .eq('is_published', true)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 export async function createArticle(article) {
   requireSupabase();
   const { data, error } = await supabase.from('articles').insert(article).select().single();

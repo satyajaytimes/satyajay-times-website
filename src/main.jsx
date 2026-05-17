@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Navigate, NavLink, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { BrowserRouter, Link, Navigate, NavLink, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { Clock3, Download, Facebook, Instagram, Mail, MapPin, Newspaper, Phone, Search, Twitter, X, Youtube } from 'lucide-react';
 import ProtectedRoute from './components/ProtectedRoute';
 import { getArticles, getEPapers, getTicker } from './lib/api';
 import Login from './pages/Login';
 import AdminPage from './pages/Admin';
+import ArticleDetail from './pages/ArticleDetail';
+import { formatRelativeTime, getArticleTimestamp } from './lib/time';
 import './style.css';
 
 const logo = '/satyajay-logo.jpg';
@@ -95,6 +97,7 @@ function AppShell() {
           <Route path="/" element={<HomePage articles={siteArticles} />} />
           <Route path="/category/:slug" element={<CategoryPage articles={siteArticles} />} />
           <Route path="/videos" element={<VideosPage articles={siteArticles} />} />
+          <Route path="/article/:id" element={<ArticleDetail />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -178,10 +181,34 @@ function Ticker({ tickers }) {
   return <div className="ticker"><b>🔴 ब्रेकिंग</b><marquee>{safeTickers.join('   •   ')}</marquee></div>;
 }
 function Lead({ article, large }) {
-  return <article className={`lead ${large ? 'large' : ''}`}><img src={article?.image_url || '/news-images/faridabad.svg'} /><div><span>{article?.category}</span><h2>{article?.title}</h2><p>{article?.caption}</p><small>◷ 2 दिन पहले ➻ {article?.author}</small></div></article>;
+  if (!article?.id) return null;
+  return (
+    <Link to={`/article/${article.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+      <article className={`lead ${large ? 'large' : ''}`}>
+        <img src={article?.image_url || '/news-images/faridabad.svg'} alt="" />
+        <div>
+          <span>{article?.category}</span>
+          <h2>{article?.title}</h2>
+          <p>{article?.caption}</p>
+          <small>◷ {formatRelativeTime(getArticleTimestamp(article))} ➻ {article?.author}</small>
+        </div>
+      </article>
+    </Link>
+  );
 }
 function Card({ article, small }) {
-  return <article className={small ? 'small-card' : 'card'}><img src={article.image_url || '/news-images/faridabad.svg'} /><div><h3>{article.title}</h3><p>{article.category}</p></div></article>;
+  if (!article?.id) return null;
+  return (
+    <Link to={`/article/${article.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+      <article className={small ? 'small-card' : 'card'}>
+        <img src={article.image_url || '/news-images/faridabad.svg'} alt="" />
+        <div>
+          <h3>{article.title}</h3>
+          <p>{article.category}</p>
+        </div>
+      </article>
+    </Link>
+  );
 }
 function EPaperPopup({ epaper, onClose }) {
   return <div className="modal"><div className="popup"><button className="close" onClick={onClose}><X /></button><h2>{epaper.title}</h2><img src={epaper.image_url || '/epaper-cover.svg'} /><a className="download" href={epaper.pdf_url || '#'}><Download /> PDF डाउनलोड करें</a></div></div>;
