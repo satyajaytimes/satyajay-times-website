@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { ArticleSocialMetaHelmet } from '../components/SocialShareMeta';
 import VideoEmbed, { getArticleVideoUrl } from '../components/VideoEmbed';
 import { getArticleById } from '../lib/api';
 import { formatRelativeTime, getArticleTimestamp } from '../lib/time';
@@ -37,14 +38,22 @@ export default function ArticleDetail() {
   }, [id]);
 
   if (loading) {
-    return <div className="route-loading">लोड हो रहा है...</div>;
+    return (
+      <>
+        <ArticleSocialMetaHelmet article={null} articleId={id} />
+        <div className="route-loading">लोड हो रहा है...</div>
+      </>
+    );
   }
 
   if (notFound || !article) {
     return (
-      <section className="page-grid">
-        <p className="empty-state">Article not found</p>
-      </section>
+      <>
+        <ArticleSocialMetaHelmet article={null} articleId={id} />
+        <section className="page-grid">
+          <p className="empty-state">Article not found</p>
+        </section>
+      </>
     );
   }
 
@@ -56,21 +65,24 @@ export default function ArticleDetail() {
   const videoUrl = getArticleVideoUrl(article);
 
   return (
-    <section className="page-grid" style={{ gridTemplateColumns: '1fr' }}>
-      <article className="card">
-        <img src={article.image_url || '/news-images/faridabad.svg'} alt={article.title} />
-        <div>
-          <p>{article.category}</p>
-          <h3>{article.title}</h3>
-          <small>
-            {relativeTime ? `◷ ${relativeTime}` : ''}
-            {publishDate ? ` • ${publishDate}` : ''}
-            {article.author ? ` ➻ ${article.author}` : ''}
-          </small>
-          {videoUrl ? <VideoEmbed url={videoUrl} /> : null}
-          {article.content ? <div>{article.content}</div> : null}
-        </div>
-      </article>
-    </section>
+    <>
+      <ArticleSocialMetaHelmet article={article} articleId={id} />
+      <section className="page-grid" style={{ gridTemplateColumns: '1fr' }}>
+        <article className="card">
+          <img src={article.image_url || '/news-images/faridabad.svg'} alt={article.title} />
+          <div>
+            <p>{article.category}</p>
+            <h3>{article.title}</h3>
+            <small>
+              {relativeTime ? `◷ ${relativeTime}` : ''}
+              {publishDate ? ` • ${publishDate}` : ''}
+              {article.author ? ` ➻ ${article.author}` : ''}
+            </small>
+            {videoUrl ? <VideoEmbed url={videoUrl} /> : null}
+            {article.content ? <div>{article.content}</div> : null}
+          </div>
+        </article>
+      </section>
+    </>
   );
 }

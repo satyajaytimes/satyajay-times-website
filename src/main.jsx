@@ -1,13 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Link, Navigate, NavLink, Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Helmet, HelmetProvider } from 'react-helmet-async';
+import { BrowserRouter, Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Clock3, Download, Facebook, Instagram, Mail, MapPin, Newspaper, Phone, Search, Twitter, X, Youtube } from 'lucide-react';
 import ProtectedRoute from './components/ProtectedRoute';
 import { getArticles, getEPapers, getLatestPublishedArticles, getTicker } from './lib/api';
 import Login from './pages/Login';
 import AdminPage from './pages/Admin';
 import ArticleDetail from './pages/ArticleDetail';
+import { HomeSocialMetaHelmet } from './components/SocialShareMeta';
 import { searchArticles } from './lib/search';
+import { HOME_DESCRIPTION, HOME_TITLE, SITE_NAME, SITE_ORIGIN, absoluteUrl } from './lib/siteMeta';
 import { formatRelativeTime, getArticleTimestamp } from './lib/time';
 import { formatWeatherLabel, useWeather } from './lib/weather';
 import './style.css';
@@ -100,6 +103,7 @@ function AppShell() {
 
   return (
     <>
+      <AppShellOtherRoutesMetaHelmet />
       <Header now={now} query={query} setQuery={setQuery} />
       <Ticker tickers={tickers} />
       <main>
@@ -141,8 +145,41 @@ function AdminRoute() {
   return <ProtectedRoute navigate={navigate}><AdminPage navigate={navigate} /></ProtectedRoute>;
 }
 
+function AppShellOtherRoutesMetaHelmet() {
+  const { pathname } = useLocation();
+  if (pathname === '/' || pathname.startsWith('/article/')) return null;
+
+  const canonical = `${SITE_ORIGIN}${pathname.startsWith('/') ? pathname : `/${pathname}`}`;
+  const ogImage = absoluteUrl('/satyajay-logo.jpg');
+
+  return (
+    <Helmet prioritizeSeoTags>
+      <title>{HOME_TITLE}</title>
+      <meta name="description" content={HOME_DESCRIPTION} />
+      <link rel="canonical" href={canonical} />
+
+      <meta property="og:title" content={HOME_TITLE} />
+      <meta property="og:description" content={HOME_DESCRIPTION} />
+      <meta property="og:image" content={ogImage} />
+      <meta property="og:url" content={canonical} />
+      <meta property="og:type" content="website" />
+      <meta property="og:site_name" content={SITE_NAME} />
+
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={HOME_TITLE} />
+      <meta name="twitter:description" content={HOME_DESCRIPTION} />
+      <meta name="twitter:image" content={ogImage} />
+    </Helmet>
+  );
+}
+
 function HomePage({ articles, latestArticles }) {
-  return <NewsLayout articles={articles} mainArticles={articles} latestArticles={latestArticles} />;
+  return (
+    <>
+      <HomeSocialMetaHelmet />
+      <NewsLayout articles={articles} mainArticles={articles} latestArticles={latestArticles} />
+    </>
+  );
 }
 
 function CategoryPage({ articles, latestArticles }) {
@@ -277,4 +314,8 @@ function Footer() {
   return <footer><div><h2>सत्यजय टाइम्स</h2><p>सत्य का प्रहरी आपके हाथ</p></div><div><p><MapPin />5 आर-1 (प्रथम तल), HDFC बैंक B.K. चौक NIT, फरीदाबाद</p><p><Phone />9811232533</p><p><Mail />sjtfaridabad@gmail.com</p><div className="socials">{socials.map(([label, href, Icon]) => <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label}><Icon /></a>)}</div></div></footer>;
 }
 
-createRoot(document.getElementById('root')).render(<App />);
+createRoot(document.getElementById('root')).render(
+  <HelmetProvider>
+    <App />
+  </HelmetProvider>,
+);
