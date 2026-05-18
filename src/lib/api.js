@@ -33,6 +33,19 @@ export async function getArticles() {
   return data || [];
 }
 
+/** Latest published articles for the “ताज़ा खबरें” sidebar (newest first). */
+export async function getLatestPublishedArticles(limit = 10) {
+  requireSupabase();
+  const { data, error } = await supabase
+    .from('articles')
+    .select('*')
+    .eq('is_published', true)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
 export async function getArticleById(id) {
   requireSupabase();
   const { data, error } = await supabase

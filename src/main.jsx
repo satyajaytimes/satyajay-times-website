@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Link, Navigate, NavLink, Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Clock3, Download, Facebook, Instagram, Mail, MapPin, Newspaper, Phone, Search, Twitter, X, Youtube } from 'lucide-react';
 import ProtectedRoute from './components/ProtectedRoute';
-import { getArticles, getEPapers, getTicker } from './lib/api';
+import { getArticles, getEPapers, getLatestPublishedArticles, getTicker } from './lib/api';
 import Login from './pages/Login';
 import AdminPage from './pages/Admin';
 import ArticleDetail from './pages/ArticleDetail';
@@ -57,6 +57,9 @@ function AppShell() {
   const [popup, setPopup] = useState(false);
   const [epaper, setEPaper] = useState(defaultEPaper);
   const [siteArticles, setSiteArticles] = useState(seedArticles);
+  const [latestSidebarArticles, setLatestSidebarArticles] = useState(() =>
+    seedArticles.filter((item) => item.is_published !== false).slice(0, 10),
+  );
   const [tickers, setTickers] = useState(seedTickers);
 
   useEffect(() => {
@@ -67,11 +70,17 @@ function AppShell() {
   useEffect(() => {
     async function loadPublicData() {
       try {
-        const [articleRows, tickerRows, epaperRows] = await Promise.all([getArticles(), getTicker(), getEPapers()]);
+        const [articleRows, tickerRows, epaperRows, latestRows] = await Promise.all([
+          getArticles(),
+          getTicker(),
+          getEPapers(),
+          getLatestPublishedArticles(10),
+        ]);
         const publishedArticles = articleRows.filter((item) => item.is_published !== false);
         const activeTickers = tickerRows.filter((item) => item.is_active !== false);
         const activeEPaper = epaperRows.find((item) => item.is_active) || epaperRows[0];
         if (publishedArticles.length) setSiteArticles(publishedArticles);
+        setLatestSidebarArticles(latestRows);
         if (activeTickers.length) setTickers(activeTickers);
         if (activeEPaper) setEPaper(activeEPaper);
       } catch (error) {
@@ -96,11 +105,11 @@ function AppShell() {
       <main>
         <section className="epaper-strip"><button onClick={() => setPopup(true)}><Newspaper /> 📰 आज का अखबार</button></section>
         <Routes>
-          <Route path="/" element={<HomePage articles={siteArticles} />} />
-          <Route path="/category/:slug" element={<CategoryPage articles={siteArticles} />} />
-          <Route path="/videos" element={<VideosPage articles={siteArticles} />} />
+          <Route path="/" element={<HomePage articles={siteArticles} latestArticles={latestSidebarArticles} />} />
+          <Route path="/category/:slug" element={<CategoryPage articles={siteArticles} latestArticles={latestSidebarArticles} />} />
+          <Route path="/videos" element={<VideosPage articles={siteArticles} latestArticles={latestSidebarArticles} />} />
           <Route path="/article/:id" element={<ArticleDetail />} />
-          <Route path="/search" element={<SearchPage articles={siteArticles} />} />
+          <Route path="/search" element={<SearchPage articles={siteArticles} latestArticles={latestSidebarArticles} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -132,24 +141,24 @@ function AdminRoute() {
   return <ProtectedRoute navigate={navigate}><AdminPage navigate={navigate} /></ProtectedRoute>;
 }
 
-function HomePage({ articles }) {
-  return <NewsLayout articles={articles} mainArticles={articles} />;
+function HomePage({ articles, latestArticles }) {
+  return <NewsLayout articles={articles} mainArticles={articles} latestArticles={latestArticles} />;
 }
 
-function CategoryPage({ articles }) {
+function CategoryPage({ articles, latestArticles }) {
   const { slug } = useParams();
   const category = slugToCategory[slug];
   if (!category) return <Navigate to="/" replace />;
   const filtered = articles.filter((item) => item.category === category);
-  return <NewsLayout articles={articles} mainArticles={filtered} heading={category} />;
+  return <NewsLayout articles={articles} mainArticles={filtered} heading={category} latestArticles={latestArticles} />;
 }
 
-function VideosPage({ articles }) {
+function VideosPage({ articles, latestArticles }) {
   const filtered = articles.filter((item) => item.category === 'वीडियो न्यूज़' || item.video_url);
-  return <NewsLayout articles={articles} mainArticles={filtered} heading="वीडियो न्यूज़" />;
+  return <NewsLayout articles={articles} mainArticles={filtered} heading="वीडियो न्यूज़" latestArticles={latestArticles} />;
 }
 
-function SearchPage({ articles }) {
+function SearchPage({ articles, latestArticles }) {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   const results = useMemo(() => searchArticles(articles, query), [articles, query]);
@@ -172,7 +181,7 @@ function SearchPage({ articles }) {
       </div>
       <aside className="latest">
         <h2>ताज़ा खबरें</h2>
-        {articles.map((item) => (
+        {latestArticles.map((item) => (
           <Card key={item.id} article={item} small />
         ))}
       </aside>
@@ -180,7 +189,7 @@ function SearchPage({ articles }) {
   );
 }
 
-function NewsLayout({ articles, mainArticles, heading }) {
+function NewsLayout({ articles, mainArticles, heading, latestArticles }) {
   const visibleArticles = mainArticles.length ? mainArticles : [];
   return (
     <section className="page-grid">
@@ -199,7 +208,12 @@ function NewsLayout({ articles, mainArticles, heading }) {
           <section key={cat}><h2 className="section-title">{cat}</h2><div className="cards">{articles.filter((item) => item.category === cat).map((item) => <Card key={item.id} article={item} />)}</div></section>
         ))}
       </div>
-      <aside className="latest"><h2>ताज़ा खबरें</h2>{articles.map((item) => <Card key={item.id} article={item} small />)}</aside>
+      <aside className="latest">
+        <h2>ताज़ा खबरें</h2>
+        {latestArticles.map((item) => (
+          <Card key={item.id} article={item} small />
+        ))}
+      </aside>
     </section>
   );
 }
