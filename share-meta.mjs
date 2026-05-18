@@ -137,6 +137,25 @@ export async function fetchArticleById(articleId, { supabaseUrl, supabaseKey }) 
   return rows?.[0] || null;
 }
 
+export async function fetchAllPublishedArticles({ supabaseUrl, supabaseKey }) {
+  if (!supabaseUrl || !supabaseKey) return [];
+
+  const url = new URL(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/articles`);
+  url.searchParams.set('is_published', 'eq.true');
+  url.searchParams.set('select', 'id,title,caption,content,image_url');
+  url.searchParams.set('order', 'created_at.desc');
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
+    },
+  });
+
+  if (!response.ok) return [];
+  return response.json();
+}
+
 export async function buildArticleHtmlFromTemplate(html, { siteOrigin, articleId, article }) {
   const meta = buildArticleHeadTags({ siteOrigin, articleId, article });
   return injectHeadMeta(html, meta);
