@@ -37,10 +37,12 @@ export function HomeSocialMetaHelmet() {
 }
 
 export function ArticleSocialMetaHelmet({ article, articleId }) {
+  if (!article) return null;
+
   const canonical = articleCanonicalUrl(articleId);
-  const title = article?.title?.trim() || HOME_TITLE;
-  const description = article ? articleShareDescription(article) : HOME_DESCRIPTION;
-  const image = article ? articleShareImage(article) : DEFAULT_OG_IMAGE;
+  const title = article.title?.trim() || HOME_TITLE;
+  const description = articleShareDescription(article);
+  const image = articleShareImage(article);
 
   return (
     <Helmet prioritizeSeoTags>

@@ -1,20 +1,22 @@
-const rawOrigin = import.meta.env.VITE_SITE_URL || 'https://satyajaytimes.com';
+import {
+  HOME_DESCRIPTION as HOME_DESCRIPTION_BASE,
+  HOME_TITLE as HOME_TITLE_BASE,
+  SITE_NAME as SITE_NAME_BASE,
+  absoluteUrl as absoluteUrlBase,
+  articleShareDescription as articleShareDescriptionBase,
+  articleShareImage as articleShareImageBase,
+  getSiteOrigin,
+} from '../../share-meta.mjs';
 
-export const SITE_ORIGIN = String(rawOrigin).replace(/\/$/, '');
+const rawOrigin = import.meta.env.VITE_SITE_URL;
 
-export const SITE_NAME = 'सत्यजय टाइम्स';
-
-export const HOME_TITLE = 'सत्यजय टाइम्स';
-
-export const HOME_DESCRIPTION =
-  'हिंदी दैनिक समाचार पत्र - Faridabad, Haryana, National and International News';
+export const SITE_ORIGIN = getSiteOrigin(rawOrigin);
+export const SITE_NAME = SITE_NAME_BASE;
+export const HOME_TITLE = HOME_TITLE_BASE;
+export const HOME_DESCRIPTION = HOME_DESCRIPTION_BASE;
 
 export function absoluteUrl(pathOrUrl) {
-  if (!pathOrUrl) return `${SITE_ORIGIN}/satyajay-logo.jpg`;
-  const s = String(pathOrUrl).trim();
-  if (/^https?:\/\//i.test(s)) return s;
-  const path = s.startsWith('/') ? s : `/${s}`;
-  return `${SITE_ORIGIN}${path}`;
+  return absoluteUrlBase(SITE_ORIGIN, pathOrUrl);
 }
 
 export function homeCanonicalUrl() {
@@ -26,20 +28,9 @@ export function articleCanonicalUrl(articleId) {
 }
 
 export function articleShareDescription(article) {
-  const caption = article?.caption?.trim();
-  if (caption) {
-    return caption.length > 200 ? `${caption.slice(0, 197)}...` : caption;
-  }
-  const text = String(article?.content || '')
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  if (!text) return HOME_DESCRIPTION;
-  return text.length > 200 ? `${text.slice(0, 197)}...` : text;
+  return articleShareDescriptionBase(article);
 }
 
 export function articleShareImage(article) {
-  const url = article?.image_url?.trim();
-  if (!url) return absoluteUrl('/satyajay-logo.jpg');
-  return absoluteUrl(url);
+  return articleShareImageBase(SITE_ORIGIN, article);
 }

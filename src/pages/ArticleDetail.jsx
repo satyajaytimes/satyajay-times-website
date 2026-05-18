@@ -38,22 +38,14 @@ export default function ArticleDetail() {
   }, [id]);
 
   if (loading) {
-    return (
-      <>
-        <ArticleSocialMetaHelmet article={null} articleId={id} />
-        <div className="route-loading">लोड हो रहा है...</div>
-      </>
-    );
+    return <div className="route-loading">लोड हो रहा है...</div>;
   }
 
   if (notFound || !article) {
     return (
-      <>
-        <ArticleSocialMetaHelmet article={null} articleId={id} />
-        <section className="page-grid">
-          <p className="empty-state">Article not found</p>
-        </section>
-      </>
+      <section className="page-grid">
+        <p className="empty-state">Article not found</p>
+      </section>
     );
   }
 
