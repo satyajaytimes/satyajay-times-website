@@ -191,7 +191,7 @@ function CategoryPage({ articles, latestArticles }) {
 }
 
 function VideosPage({ articles, latestArticles }) {
-  const filtered = articles.filter((item) => item.category === 'वीडियो न्यूज़' || item.video_url);
+  const filtered = articles.filter((item) => item.category === 'वीडियो न्यूज़' || item.video_url).slice(0, 6);
   return <NewsLayout articles={articles} mainArticles={filtered} heading="वीडियो न्यूज़" latestArticles={latestArticles} />;
 }
 
@@ -238,11 +238,11 @@ function NewsLayout({ articles, mainArticles, heading, latestArticles }) {
           </section>
         )}
         {!heading && <h2 className="section-title">ब्रेकिंग न्यूज़</h2>}
-        {!heading && <div className="cards">{articles.filter((item) => item.is_breaking).map((item) => <Card key={item.id} article={item} />)}</div>}
+        {!heading && <div className="cards">{articles.filter((item) => item.is_breaking).slice(0, 6).map((item) => <Card key={item.id} article={item} />)}</div>}
         {heading ? (
-          visibleArticles.length ? <div className="cards">{visibleArticles.map((item) => <Card key={item.id} article={item} />)}</div> : <p className="empty-state">इस सेक्शन में अभी कोई खबर उपलब्ध नहीं है।</p>
+          visibleArticles.length ? <div className="cards">{visibleArticles.slice(0, 6).map((item) => <Card key={item.id} article={item} />)}</div> : <p className="empty-state">इस सेक्शन में अभी कोई खबर उपलब्ध नहीं है।</p>
         ) : ['फरीदाबाद', 'हरियाणा', 'राष्ट्रीय', 'अंतर्राष्ट्रीय', 'क्रिकेट', 'मनोरंजन'].map((cat) => (
-          <section key={cat}><h2 className="section-title">{cat}</h2><div className="cards">{articles.filter((item) => item.category === cat).map((item) => <Card key={item.id} article={item} />)}</div></section>
+          <section key={cat}><h2 className="section-title">{cat}</h2><div className="cards">{articles.filter((item) => item.category === cat).slice(0, 6).map((item) => <Card key={item.id} article={item} />)}</div></section>
         ))}
       </div>
       <aside className="latest">
