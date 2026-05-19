@@ -223,6 +223,7 @@ nav a:hover {
   bottom: 0;
   padding: 24px;
   color: #fff;
+  overflow: hidden;
 }
 .lead span {
   display: inline-block;
@@ -249,6 +250,11 @@ nav a:hover {
   margin: 0 0 10px;
   font-size: 18px;
   font-weight: 700;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .lead small {
   font-size: 14px;
@@ -294,6 +300,11 @@ nav a:hover {
   font:
     800 22px/1.2 "Tiro Devanagari Hindi",
     serif;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .card p {
   margin: 0;
@@ -625,6 +636,10 @@ footer p {
     font-size: 26px;
     -webkit-line-clamp: 3;
     line-clamp: 3;
+  }
+  .lead p {
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
   .popup h2 {
     font-size: 30px;
