@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { ArticleSocialMetaHelmet } from '../components/SocialShareMeta';
 import VideoEmbed, { getArticleVideoUrl } from '../components/VideoEmbed';
 import { getArticleById } from '../lib/api';
 import { formatRelativeTime, getArticleTimestamp } from '../lib/time';
@@ -57,6 +58,7 @@ export default function ArticleDetail() {
 
   return (
     <>
+      <ArticleSocialMetaHelmet article={article} articleId={id} key={article?.id || id} />
       <section className="page-grid" style={{ gridTemplateColumns: '1fr' }}>
         <article className="card">
           <img src={article.image_url || '/news-images/faridabad.svg'} alt={article.title} />
