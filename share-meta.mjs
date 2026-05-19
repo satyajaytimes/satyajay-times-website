@@ -41,10 +41,45 @@ export function articleShareDescription(article) {
   return text.length > 200 ? `${text.slice(0, 197)}...` : text;
 }
 
+export function extractVideoThumbnail(videoUrl) {
+  if (!videoUrl || typeof videoUrl !== 'string') return null;
+  
+  const url = videoUrl.trim();
+  if (!url) return null;
+
+  // YouTube URLs
+  const youtubePatterns = [
+    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/,
+    /youtube\.com\/shorts\/([^"&?\/\s]{11})/,
+    /youtube\.com\/live\/([^"&?\/\s]{11})/,
+  ];
+
+  for (const pattern of youtubePatterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) {
+      return `https://img.youtube.com/vi/${match[1]}/maxresdefault.jpg`;
+    }
+  }
+
+  // Facebook videos don't have a reliable public thumbnail API
+  // Instagram videos don't have a reliable public thumbnail API
+  // For other platforms, we return null and fall back to default image
+  
+  return null;
+}
+
 export function articleShareImage(siteOrigin, article) {
-  const url = article?.image_url?.trim();
-  if (!url) return absoluteUrl(siteOrigin, '/satyajay-logo.jpg');
-  return absoluteUrl(siteOrigin, url);
+  const imageUrl = article?.image_url?.trim();
+  if (imageUrl) return absoluteUrl(siteOrigin, imageUrl);
+  
+  // If no image, try video thumbnail
+  const videoUrl = article?.video_url?.trim();
+  if (videoUrl) {
+    const videoThumbnail = extractVideoThumbnail(videoUrl);
+    if (videoThumbnail) return videoThumbnail;
+  }
+  
+  return absoluteUrl(siteOrigin, '/satyajay-logo.jpg');
 }
 
 export function buildArticleHeadTags({ siteOrigin, articleId, article }) {
@@ -123,7 +158,7 @@ export async function fetchArticleById(articleId, { supabaseUrl, supabaseKey }) 
   const url = new URL(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/articles`);
   url.searchParams.set('id', `eq.${articleId}`);
   url.searchParams.set('is_published', 'eq.true');
-  url.searchParams.set('select', 'id,title,caption,content,image_url');
+  url.searchParams.set('select', 'id,title,caption,content,image_url,video_url');
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -142,7 +177,7 @@ export async function fetchAllPublishedArticles({ supabaseUrl, supabaseKey }) {
 
   const url = new URL(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/articles`);
   url.searchParams.set('is_published', 'eq.true');
-  url.searchParams.set('select', 'id,title,caption,content,image_url');
+  url.searchParams.set('select', 'id,title,caption,content,image_url,video_url');
   url.searchParams.set('order', 'created_at.desc');
 
   const response = await fetch(url.toString(), {
