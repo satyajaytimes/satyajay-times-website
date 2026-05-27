@@ -94,6 +94,9 @@ export function buildArticleHeadTags({ siteOrigin, articleId, article }) {
     canonical,
     image,
     type: 'article',
+    publishedTime: article?.created_at,
+    modifiedTime: article?.updated_at,
+    article,
   });
 }
 
@@ -112,8 +115,33 @@ export function buildArticleNotFoundHeadTags({ siteOrigin, articleId }) {
   });
 }
 
-function buildShareHeadTags({ title, description, canonical, image, type }) {
+function buildShareHeadTags({ title, description, canonical, image, type, publishedTime, modifiedTime, article }) {
   const e = escapeHtml;
+
+  const articleDateTags = type === 'article' && publishedTime
+    ? `
+    <meta property="article:published_time" content="${e(publishedTime)}" />${modifiedTime ? `
+    <meta property="article:modified_time" content="${e(modifiedTime)}" />` : ''}`
+    : '';
+  const articleJsonLd = type === 'article' && article
+    ? `
+    <script type="application/ld+json">${JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'NewsArticle',
+      headline: title,
+      description,
+      image: [image],
+      datePublished: publishedTime || undefined,
+      dateModified: modifiedTime || publishedTime || undefined,
+      author: { '@type': 'Person', name: article.author || SITE_NAME },
+      publisher: {
+        '@type': 'NewsMediaOrganization',
+        name: SITE_NAME,
+        logo: { '@type': 'ImageObject', url: absoluteUrl(DEFAULT_SITE_ORIGIN, '/favicon-512.png') },
+      },
+      mainEntityOfPage: canonical,
+    }).replace(/</g, '\\u003c')}</script>`
+    : '';
 
   return `    <title>${e(title)}</title>
     <meta name="description" content="${e(description)}" />
@@ -126,12 +154,12 @@ function buildShareHeadTags({ title, description, canonical, image, type }) {
     <meta property="og:description" content="${e(description)}" />
     <meta property="og:image" content="${e(image)}" />
     <meta property="og:url" content="${e(canonical)}" />
-    <meta property="og:type" content="${e(type)}" />
+    <meta property="og:type" content="${e(type)}" />${articleDateTags}
     <meta property="og:site_name" content="${e(SITE_NAME)}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${e(title)}" />
     <meta name="twitter:description" content="${e(description)}" />
-    <meta name="twitter:image" content="${e(image)}" />`;
+    <meta name="twitter:image" content="${e(image)}" />${articleJsonLd}`;
 }
 
 export function buildHomeHeadTags(siteOrigin) {
@@ -169,7 +197,7 @@ export async function fetchArticleById(articleId, { supabaseUrl, supabaseKey }) 
   const url = new URL(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/articles`);
   url.searchParams.set('id', `eq.${articleId}`);
   url.searchParams.set('is_published', 'eq.true');
-  url.searchParams.set('select', 'id,title,caption,content,image_url,video_url');
+  url.searchParams.set('select', 'id,title,caption,content,image_url,video_url,author,category,created_at');
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -188,7 +216,7 @@ export async function fetchAllPublishedArticles({ supabaseUrl, supabaseKey }) {
 
   const url = new URL(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/articles`);
   url.searchParams.set('is_published', 'eq.true');
-  url.searchParams.set('select', 'id,title,caption,content,image_url,video_url');
+  url.searchParams.set('select', 'id,title,caption,content,image_url,video_url,author,category,created_at');
   url.searchParams.set('order', 'created_at.desc');
 
   const response = await fetch(url.toString(), {

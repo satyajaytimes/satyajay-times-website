@@ -59,6 +59,8 @@ export function ArticleSocialMetaHelmet({ article, articleId }) {
       <meta property="og:image" content={image} />
       <meta property="og:url" content={canonical} />
       <meta property="og:type" content="article" />
+      {article.created_at ? <meta property="article:published_time" content={article.created_at} /> : null}
+      {article.updated_at ? <meta property="article:modified_time" content={article.updated_at} /> : null}
       <meta property="og:site_name" content={SITE_NAME} />
 
       <meta name="twitter:card" content="summary_large_image" />

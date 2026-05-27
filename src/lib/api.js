@@ -58,6 +58,21 @@ export async function getArticleById(id) {
   return data;
 }
 
+export async function getRelatedArticles({ articleId, category, limit = 4 }) {
+  requireSupabase();
+  if (!category) return [];
+  const { data, error } = await supabase
+    .from('articles')
+    .select('*')
+    .eq('is_published', true)
+    .eq('category', category)
+    .neq('id', articleId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
 export async function createArticle(article) {
   requireSupabase();
   const { data, error } = await supabase.from('articles').insert(article).select().single();
