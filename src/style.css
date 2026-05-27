@@ -224,6 +224,7 @@ nav a:hover {
   padding: 24px;
   color: #fff;
   overflow: hidden;
+  max-height: 100%;
 }
 .lead span {
   display: inline-block;
@@ -243,6 +244,12 @@ nav a:hover {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+.side-leads .lead h2 {
+  font-size: 24px;
+  line-height: 1.12;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
 .lead.large h2 {
   font-size: 38px;
 }
@@ -255,6 +262,14 @@ nav a:hover {
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+.side-leads .lead p {
+  font-size: 16px;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+.side-leads .lead div {
+  padding: 18px;
 }
 .lead small {
   font-size: 14px;
