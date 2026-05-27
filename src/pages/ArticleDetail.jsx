@@ -63,8 +63,9 @@ export default function ArticleDetail() {
         <article className="card">
           <img src={article.image_url || '/news-images/faridabad.svg'} alt={article.title} />
           <div>
-            <p>{article.category}</p>
-            <h3>{article.title}</h3>
+            <p className="category">{article.category}</p>
+            <h1>{article.title}</h1>
+            {article.caption ? <p className="story-caption">{article.caption}</p> : null}
             <small>
               {relativeTime ? `◷ ${relativeTime}` : ''}
               {publishDate ? ` • ${publishDate}` : ''}

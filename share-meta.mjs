@@ -1,9 +1,9 @@
 export const SITE_NAME = 'सत्यजय टाइम्स';
 
-export const HOME_TITLE = 'सत्यजय टाइम्स';
+export const HOME_TITLE = 'सत्यजय टाइम्स - ताज़ा हिंदी समाचार';
 
 export const HOME_DESCRIPTION =
-  'हिंदी दैनिक समाचार पत्र - Faridabad, Haryana, National and International News';
+  'सत्यजय टाइम्स पर फरीदाबाद, हरियाणा, राष्ट्रीय, अंतर्राष्ट्रीय, क्रिकेट और मनोरंजन की ताज़ा हिंदी खबरें पढ़ें।';
 
 export const DEFAULT_SITE_ORIGIN = 'https://satyajaytimes.com';
 
@@ -21,7 +21,7 @@ export function escapeHtml(value) {
 }
 
 export function absoluteUrl(siteOrigin, pathOrUrl) {
-  if (!pathOrUrl) return `${siteOrigin}/satyajay-logo.jpg`;
+  if (!pathOrUrl) return `${siteOrigin}/favicon-512.png`;
   const s = String(pathOrUrl).trim();
   if (/^https?:\/\//i.test(s)) return s;
   const path = s.startsWith('/') ? s : `/${s}`;
@@ -79,14 +79,14 @@ export function articleShareImage(siteOrigin, article) {
     if (videoThumbnail) return videoThumbnail;
   }
   
-  return absoluteUrl(siteOrigin, '/satyajay-logo.jpg');
+  return absoluteUrl(siteOrigin, '/favicon-512.png');
 }
 
 export function buildArticleHeadTags({ siteOrigin, articleId, article }) {
   const canonical = `${siteOrigin}/article/${articleId}`;
   const title = article?.title?.trim() || HOME_TITLE;
   const description = article ? articleShareDescription(article) : HOME_DESCRIPTION;
-  const image = article ? articleShareImage(siteOrigin, article) : absoluteUrl(siteOrigin, '/satyajay-logo.jpg');
+  const image = article ? articleShareImage(siteOrigin, article) : absoluteUrl(siteOrigin, '/favicon-512.png');
 
   return buildShareHeadTags({
     title,
@@ -101,7 +101,7 @@ export function buildArticleNotFoundHeadTags({ siteOrigin, articleId }) {
   const canonical = `${siteOrigin}/article/${articleId}`;
   const title = `लेख नहीं मिला | ${SITE_NAME}`;
   const description = 'यह लेख उपलब्ध नहीं है।';
-  const image = absoluteUrl(siteOrigin, '/satyajay-logo.jpg');
+  const image = absoluteUrl(siteOrigin, '/favicon-512.png');
 
   return buildShareHeadTags({
     title,
@@ -117,6 +117,10 @@ function buildShareHeadTags({ title, description, canonical, image, type }) {
 
   return `    <title>${e(title)}</title>
     <meta name="description" content="${e(description)}" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#c0392b" />
+    <link rel="icon" type="image/png" sizes="512x512" href="${e(absoluteUrl(DEFAULT_SITE_ORIGIN, '/favicon-512.png'))}" />
+    <link rel="apple-touch-icon" href="${e(absoluteUrl(DEFAULT_SITE_ORIGIN, '/favicon-512.png'))}" />
     <link rel="canonical" href="${e(canonical)}" />
     <meta property="og:title" content="${e(title)}" />
     <meta property="og:description" content="${e(description)}" />
@@ -132,7 +136,7 @@ function buildShareHeadTags({ title, description, canonical, image, type }) {
 
 export function buildHomeHeadTags(siteOrigin) {
   const canonical = `${siteOrigin}/`;
-  const image = absoluteUrl(siteOrigin, '/satyajay-logo.jpg');
+  const image = absoluteUrl(siteOrigin, '/favicon-512.png');
 
   return buildShareHeadTags({
     title: HOME_TITLE,

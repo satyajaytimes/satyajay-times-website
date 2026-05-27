@@ -729,3 +729,5 @@ footer p {
 .page-heading {
   margin-top: 0;
 }
+
+.card .caption{margin:0;color:var(--slate);font-weight:700;line-height:1.35}.card .category{margin-top:8px;color:var(--red);font-weight:800}.small-card .caption{display:none}.small-card .category{margin:4px 0 0;color:var(--slate);font-size:13px}.story-caption{margin:10px 0 14px;color:var(--slate);font-size:22px;font-weight:700;line-height:1.4}.card h1{margin:0 0 10px;color:#202020;font:800 38px/1.15 'Tiro Devanagari Hindi',serif}

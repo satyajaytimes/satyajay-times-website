@@ -10,7 +10,7 @@ import {
   homeCanonicalUrl,
 } from '../lib/siteMeta';
 
-const DEFAULT_OG_IMAGE = absoluteUrl('/satyajay-logo.jpg');
+const DEFAULT_OG_IMAGE = absoluteUrl('/favicon-512.png');
 
 export function HomeSocialMetaHelmet() {
   const canonical = homeCanonicalUrl();
@@ -19,6 +19,10 @@ export function HomeSocialMetaHelmet() {
     <Helmet prioritizeSeoTags>
       <title>{HOME_TITLE}</title>
       <meta name="description" content={HOME_DESCRIPTION} />
+      <meta name="robots" content="index, follow, max-image-preview:large" />
+      <meta name="theme-color" content="#c0392b" />
+      <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
+      <link rel="apple-touch-icon" href="/favicon-512.png" />
       <link rel="canonical" href={canonical} />
 
       <meta property="og:title" content={HOME_TITLE} />

@@ -150,7 +150,7 @@ function AppShellOtherRoutesMetaHelmet() {
   if (pathname === '/' || pathname.startsWith('/article/')) return null;
 
   const canonical = `${SITE_ORIGIN}${pathname.startsWith('/') ? pathname : `/${pathname}`}`;
-  const ogImage = absoluteUrl('/satyajay-logo.jpg');
+  const ogImage = absoluteUrl('/favicon-512.png');
 
   return (
     <Helmet prioritizeSeoTags>
@@ -281,7 +281,7 @@ function Lead({ article, large }) {
   return (
     <Link to={`/article/${article.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
       <article className={`lead ${large ? 'large' : ''}`}>
-        <img src={article?.image_url || '/news-images/faridabad.svg'} alt="" />
+        <img src={article?.image_url || '/news-images/faridabad.svg'} alt={article?.title || SITE_NAME} />
         <div>
           <span>{article?.category}</span>
           <h2>{article?.title}</h2>
@@ -297,10 +297,11 @@ function Card({ article, small }) {
   return (
     <Link to={`/article/${article.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
       <article className={small ? 'small-card' : 'card'}>
-        <img src={article.image_url || '/news-images/faridabad.svg'} alt="" />
+        <img src={article.image_url || '/news-images/faridabad.svg'} alt={article.title || SITE_NAME} />
         <div>
           <h3>{article.title}</h3>
-          <p>{article.category}</p>
+          {article.caption ? <p className="caption">{article.caption}</p> : null}
+          <p className="category">{article.category}</p>
         </div>
       </article>
     </Link>
