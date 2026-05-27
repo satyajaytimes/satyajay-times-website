@@ -149,9 +149,10 @@ export function buildHomeHeadTags(siteOrigin) {
 
 export function injectHeadMeta(html, metaHeadInner) {
   const existingHead = html.match(/<head[\s\S]*?<\/head>/i)?.[0] || '';
-  const assetTags = existingHead
-    .match(/<(script|link)\b(?=[^>]*(?:rel="stylesheet"|rel='stylesheet'|rel=stylesheet|rel="modulepreload"|rel='modulepreload'|rel=modulepreload|type="module"|type='module'|src=))[\s\S]*?(?:<\/script>|>)/gi)
-    ?.join('\n') || '';
+  const moduleScripts = existingHead.match(/<script\b[^>]*type=["\']module["\'][^>]*><\/script>/gi) || [];
+  const stylesheets = existingHead.match(/<link\b[^>]*rel=["\']stylesheet["\'][^>]*>/gi) || [];
+  const modulePreloads = existingHead.match(/<link\b[^>]*rel=["\']modulepreload["\'][^>]*>/gi) || [];
+  const assetTags = [...modulePreloads, ...moduleScripts, ...stylesheets].join('\n');
 
   const head = `<head>
     <meta charset="UTF-8" />
