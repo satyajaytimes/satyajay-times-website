@@ -148,10 +148,16 @@ export function buildHomeHeadTags(siteOrigin) {
 }
 
 export function injectHeadMeta(html, metaHeadInner) {
+  const existingHead = html.match(/<head[\s\S]*?<\/head>/i)?.[0] || '';
+  const assetTags = existingHead
+    .match(/<(script|link)\b(?=[^>]*(?:rel="stylesheet"|rel='stylesheet'|rel=stylesheet|rel="modulepreload"|rel='modulepreload'|rel=modulepreload|type="module"|type='module'|src=))[\s\S]*?(?:<\/script>|>)/gi)
+    ?.join('\n') || '';
+
   const head = `<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 ${metaHeadInner}
+${assetTags ? `\n${assetTags}` : ''}
   </head>`;
   return html.replace(/<head[\s\S]*?<\/head>/i, head);
 }
