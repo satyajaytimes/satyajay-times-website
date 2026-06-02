@@ -15,16 +15,11 @@ export async function onRequestGet(context) {
     return env.ASSETS.fetch(request);
   }
 
-  const staticUrl = new URL(`/article/${articleId}/index.html`, request.url);
-  const staticResponse = await env.ASSETS.fetch(staticUrl);
-  if (staticResponse.ok) {
-    return staticResponse;
-  }
 
   const siteOrigin = getSiteOrigin(env.VITE_SITE_URL || 'https://satyajaytimes.com');
   const article = await fetchArticleById(articleId, {
-    supabaseUrl: env.VITE_SUPABASE_URL,
-    supabaseKey: env.VITE_SUPABASE_ANON_KEY,
+    supabaseUrl: env.VITE_SUPABASE_URL || env.SUPABASE_URL || 'https://phurlzbppwvlndmewdjq.supabase.co',
+    supabaseKey: env.VITE_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || 'sb_publishable_AFMHgyBqiFPYVNOGXrF64A_TghiK6IG',
   });
 
   const indexResponse = await env.ASSETS.fetch(new URL('/index.html', request.url));
