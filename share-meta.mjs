@@ -115,6 +115,21 @@ export function buildArticleNotFoundHeadTags({ siteOrigin, articleId }) {
   });
 }
 
+function buildGoogleBasicSubscriptionsTags() {
+  return `
+    <script async type="application/javascript" src="https://news.google.com/swg/js/v1/swg-basic.js"></script>
+    <script>
+      (self.SWG_BASIC = self.SWG_BASIC || []).push((basicSubscriptions) => {
+        basicSubscriptions.init({
+          type: "NewsArticle",
+          isPartOfType: ["Product"],
+          isPartOfProductId: "CAow6PjGDA:openaccess",
+          clientOptions: { theme: "light", lang: "hi" },
+        });
+      });
+    </script>`;
+}
+
 function buildShareHeadTags({ title, description, canonical, image, type, publishedTime, modifiedTime, article }) {
   const e = escapeHtml;
 
@@ -159,7 +174,7 @@ function buildShareHeadTags({ title, description, canonical, image, type, publis
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${e(title)}" />
     <meta name="twitter:description" content="${e(description)}" />
-    <meta name="twitter:image" content="${e(image)}" />${articleJsonLd}`;
+    <meta name="twitter:image" content="${e(image)}" />${buildGoogleBasicSubscriptionsTags()}${articleJsonLd}`;
 }
 
 export function buildHomeHeadTags(siteOrigin) {

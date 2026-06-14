@@ -34,6 +34,8 @@ const seedTickers = [
 
 const defaultEPaper = { title: 'आज का अखबार - 9 मई 2026', issue_date: '2026-05-09', image_url: '/epaper-cover.svg', pdf_url: '#', is_active: true };
 
+const socialLinks = [['Facebook', 'https://facebook.com/satyajaytimes', Facebook], ['YouTube', 'https://youtube.com/@SatyajayT', Youtube], ['Instagram', 'https://instagram.com/satyajaytimes', Instagram], ['Twitter', 'https://twitter.com/SatyajayT', Twitter]];
+
 const navItems = [
   { label: 'होम', to: '/' },
   { label: 'फरीदाबाद', to: '/category/faridabad' },
@@ -269,7 +271,7 @@ function Header({ now, query, setQuery }) {
     navigate(`/search?q=${encodeURIComponent(trimmed)}`);
   }
 
-  return <header><div className="topbar"><div><span className="live-dot" /> <b>लाइव</b> <b>सत्य का प्रहरी आपके हाथ</b></div><div><span className="weather">{weatherLabel}</span><Clock3 size={16} /> <b>{time}</b> <b>{date}</b></div></div><div className="masthead"><img src={logo} /><div className="brand"><h1>सत्यजय टाइम्स</h1><p>Satyajay Times</p><strong>➻ हिंदी दैनिक समाचार पत्र</strong></div><form onSubmit={handleSearchSubmit} className="search"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="खोजें..." /><Search /></form><div className="date-box"><b>तारीख {date}</b><b>समय {time}</b></div></div><nav>{navItems.map((item) => <NavLink key={item.to} to={item.to} end={item.to === '/'}>{item.label}</NavLink>)}</nav></header>;
+  return <header><div className="topbar"><div><span className="live-dot" /> <b>लाइव</b> <b>सत्य का प्रहरी आपके हाथ</b></div><div><span className="weather">{weatherLabel}</span><Clock3 size={16} /> <b>{time}</b> <b>{date}</b></div></div><div className="masthead"><img src={logo} /><div className="brand"><h1>सत्यजय टाइम्स</h1><p>Satyajay Times</p><strong>➻ हिंदी दैनिक समाचार पत्र</strong></div><div className="header-actions"><div className="header-socials">{socialLinks.map(([label, href, Icon]) => <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label}><Icon size={22} /></a>)}</div><form onSubmit={handleSearchSubmit} className="search"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="खोजें..." /><Search /></form><a className="header-contact" href="tel:+919643311765"><Phone size={17} /> संपर्क करें: +91 9643311765</a></div><div className="date-box"><b>तारीख {date}</b><b>समय {time}</b></div></div><nav>{navItems.map((item) => <NavLink key={item.to} to={item.to} end={item.to === '/'}>{item.label}</NavLink>)}</nav></header>;
 }
 
 function Ticker({ tickers }) {
@@ -311,8 +313,7 @@ function EPaperPopup({ epaper, onClose }) {
   return <div className="modal"><div className="popup"><button className="close" onClick={onClose}><X /></button><h2>{epaper.title}</h2><img src={epaper.image_url || '/epaper-cover.svg'} /><a className="download" href={epaper.pdf_url || '#'}><Download /> PDF डाउनलोड करें</a></div></div>;
 }
 function Footer() {
-  const socials = [['Facebook', 'https://facebook.com/satyajaytimes', Facebook], ['YouTube', 'https://youtube.com/@SatyajayT', Youtube], ['Instagram', 'https://instagram.com/satyajaytimes', Instagram], ['Twitter', 'https://twitter.com/SatyajayT', Twitter]];
-  return <footer><div><h2>सत्यजय टाइम्स</h2><p>सत्य का प्रहरी आपके हाथ</p></div><div><p><MapPin />5 आर-1 (प्रथम तल), HDFC बैंक B.K. चौक NIT, फरीदाबाद</p><p><Phone />9811232533</p><p><Mail />sjtfaridabad@gmail.com</p><div className="socials">{socials.map(([label, href, Icon]) => <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label}><Icon /></a>)}</div></div></footer>;
+  return <footer><div><h2>सत्यजय टाइम्स</h2><p>सत्य का प्रहरी आपके हाथ</p></div><div><p><MapPin />5 आर-1 (प्रथम तल), HDFC बैंक B.K. चौक NIT, फरीदाबाद</p><p><Phone />9811232533</p><p><Mail />sjtfaridabad@gmail.com</p><div className="socials">{socialLinks.map(([label, href, Icon]) => <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label}><Icon /></a>)}</div></div></footer>;
 }
 
 createRoot(document.getElementById('root')).render(
