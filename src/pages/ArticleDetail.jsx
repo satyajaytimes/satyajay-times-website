@@ -1,58 +1,9 @@
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArticleSocialMetaHelmet } from '../components/SocialShareMeta';
 import VideoEmbed, { getArticleVideoUrl } from '../components/VideoEmbed';
 import { getArticleById, getRelatedArticles } from '../lib/api';
 import { formatRelativeTime, getArticleTimestamp } from '../lib/time';
-
-function renderLines(lines) {
-  return lines.map((line, index) => (
-    <Fragment key={index}>
-      {index > 0 ? <br /> : null}
-      {line}
-    </Fragment>
-  ));
-}
-
-function ArticleContent({ content }) {
-  if (!content) return null;
-
-  const blocks = String(content)
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n')
-    .split(/\n{2,}/)
-    .map((block) => block.trim())
-    .filter(Boolean);
-
-  if (!blocks.length) return null;
-
-  return (
-    <div className="article-content">
-      {blocks.map((block, index) => {
-        const heading = block.match(/^#{1,3}\s+(.+)/);
-        if (heading) {
-          return <h2 key={index}>{heading[1].trim()}</h2>;
-        }
-
-        const bulletLines = block
-          .split('\n')
-          .map((line) => line.trim())
-          .filter(Boolean);
-        if (bulletLines.length > 1 && bulletLines.every((line) => /^[-*•]\s+/.test(line))) {
-          return (
-            <ul key={index}>
-              {bulletLines.map((line, itemIndex) => (
-                <li key={itemIndex}>{line.replace(/^[-*•]\s+/, '')}</li>
-              ))}
-            </ul>
-          );
-        }
-
-        return <p key={index}>{renderLines(block.split('\n'))}</p>;
-      })}
-    </div>
-  );
-}
 
 export default function ArticleDetail() {
   const { id } = useParams();
@@ -138,22 +89,24 @@ export default function ArticleDetail() {
   return (
     <>
       <ArticleSocialMetaHelmet article={article} articleId={id} key={article?.id || id} />
-      <section className="article-page">
-        <article className="article-detail">
-          <p className="category">{article.category}</p>
-          <h1>{article.title}</h1>
-          {article.caption ? <p className="story-caption">{article.caption}</p> : null}
-          <div className="article-meta">
-            {relativeTime ? <span>◷ {relativeTime}</span> : null}
-            {publishDate ? <span>{publishDate}</span> : null}
-            <span>{article.author || 'Satyajay Times'}</span>
+      <section className="page-grid" style={{ gridTemplateColumns: '1fr' }}>
+        <article className="card">
+          <img src={article.image_url || '/news-images/faridabad.svg'} alt={article.title} />
+          <div>
+            <p className="category">{article.category}</p>
+            <h1>{article.title}</h1>
+            {article.caption ? <p className="story-caption">{article.caption}</p> : null}
+            <small>
+              {relativeTime ? `◷ ${relativeTime}` : ''}
+              {publishDate ? ` • ${publishDate}` : ''}
+              {article.author ? ` ➻ ${article.author}` : ''}
+            </small>
+            <div className="article-actions">
+              <button type="button" onClick={copyArticleLink}>{copied ? 'लिंक कॉपी हो गया' : 'लिंक कॉपी करें'}</button>
+            </div>
+            {videoUrl ? <VideoEmbed url={videoUrl} /> : null}
+            {article.content ? <div>{article.content}</div> : null}
           </div>
-          <div className="article-actions">
-            <button type="button" onClick={copyArticleLink}>{copied ? 'लिंक कॉपी हो गया' : 'लिंक कॉपी करें'}</button>
-          </div>
-          <img className="article-main-image" src={article.image_url || '/news-images/faridabad.svg'} alt={article.title} loading="eager" fetchPriority="high" />
-          {videoUrl ? <VideoEmbed url={videoUrl} /> : null}
-          <ArticleContent content={article.content} />
         </article>
         {relatedArticles.length ? (
           <section className="related-news">
@@ -162,7 +115,7 @@ export default function ArticleDetail() {
               {relatedArticles.map((item) => (
                 <Link key={item.id} to={`/article/${item.id}`} className="related-card-link">
                   <article className="card">
-                    <img src={item.image_url || '/news-images/faridabad.svg'} alt={item.title} loading="lazy" />
+                    <img src={item.image_url || '/news-images/faridabad.svg'} alt={item.title} />
                     <div>
                       <h3>{item.title}</h3>
                       {item.caption ? <p className="caption">{item.caption}</p> : null}
