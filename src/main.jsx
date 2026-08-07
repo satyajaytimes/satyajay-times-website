@@ -60,6 +60,7 @@ function AppShell() {
   const [query, setQuery] = useState('');
   const [now, setNow] = useState(new Date());
   const [popup, setPopup] = useState(false);
+  const location = useLocation();
   const [epaper, setEPaper] = useState(defaultEPaper);
   const [siteArticles, setSiteArticles] = useState(seedArticles);
   const [latestSidebarArticles, setLatestSidebarArticles] = useState(() =>
@@ -96,12 +97,18 @@ function AppShell() {
   }, []);
 
   useEffect(() => {
+    if (location.pathname !== '/') {
+      setPopup(false);
+      return undefined;
+    }
+
     const last = Number(localStorage.getItem('sjt_epaper_popup_seen') || 0);
     if (Date.now() - last > 10 * 60 * 60 * 1000) {
-      const id = setTimeout(() => setPopup(true), 600);
+      const id = setTimeout(() => setPopup(true), 1500);
       return () => clearTimeout(id);
     }
-  }, []);
+    return undefined;
+  }, [location.pathname]);
 
   return (
     <>
@@ -283,7 +290,7 @@ function Lead({ article, large }) {
   return (
     <Link to={`/article/${article.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
       <article className={`lead ${large ? 'large' : ''}`}>
-        <img src={article?.image_url || '/news-images/faridabad.svg'} alt={article?.title || SITE_NAME} />
+        <img src={article?.image_url || '/news-images/faridabad.svg'} alt={article?.title || SITE_NAME} loading={large ? 'eager' : 'lazy'} />
         <div>
           <span>{article?.category}</span>
           <h2>{article?.title}</h2>
@@ -299,7 +306,7 @@ function Card({ article, small }) {
   return (
     <Link to={`/article/${article.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
       <article className={small ? 'small-card' : 'card'}>
-        <img src={article.image_url || '/news-images/faridabad.svg'} alt={article.title || SITE_NAME} />
+        <img src={article.image_url || '/news-images/faridabad.svg'} alt={article.title || SITE_NAME} loading="lazy" />
         <div>
           <h3>{article.title}</h3>
           {article.caption ? <p className="caption">{article.caption}</p> : null}
@@ -310,7 +317,7 @@ function Card({ article, small }) {
   );
 }
 function EPaperPopup({ epaper, onClose }) {
-  return <div className="modal"><div className="popup"><button className="close" onClick={onClose}><X /></button><h2>{epaper.title}</h2><img src={epaper.image_url || '/epaper-cover.svg'} /><a className="download" href={epaper.pdf_url || '#'}><Download /> PDF डाउनलोड करें</a></div></div>;
+  return <div className="modal" role="dialog" aria-modal="true" aria-label="आज का अखबार"><div className="popup"><button className="close" onClick={onClose} aria-label="बंद करें"><X /></button><h2>{epaper.title}</h2><img src={epaper.image_url || '/epaper-cover.svg'} alt={epaper.title || 'आज का अखबार'} loading="lazy" /><a className="download" href={epaper.pdf_url || '#'}><Download /> PDF डाउनलोड करें</a></div></div>;
 }
 function Footer() {
   return <footer><div><h2>सत्यजय टाइम्स</h2><p>सत्य का प्रहरी आपके हाथ</p></div><div><p><MapPin />5 आर-1 (प्रथम तल), HDFC बैंक B.K. चौक NIT, फरीदाबाद</p><p><Phone />9811232533</p><p><Mail />sjtfaridabad@gmail.com</p><div className="socials">{socialLinks.map(([label, href, Icon]) => <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label}><Icon /></a>)}</div></div></footer>;

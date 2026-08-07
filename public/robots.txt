@@ -2,3 +2,5 @@ User-agent: *
 Allow: /
 
 Sitemap: https://satyajaytimes.com/sitemap.xml
+Sitemap: https://satyajaytimes.com/news-sitemap.xml
+Sitemap: https://satyajaytimes.com/image-sitemap.xml

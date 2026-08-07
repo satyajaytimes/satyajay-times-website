@@ -36,6 +36,33 @@ export function HomeSocialMetaHelmet() {
       <meta name="twitter:title" content={HOME_TITLE} />
       <meta name="twitter:description" content={HOME_DESCRIPTION} />
       <meta name="twitter:image" content={DEFAULT_OG_IMAGE} />
+      <script type="application/ld+json">{JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'NewsMediaOrganization',
+            name: SITE_NAME,
+            alternateName: 'Satyajay Times',
+            url: homeCanonicalUrl(),
+            logo: {
+              '@type': 'ImageObject',
+              url: DEFAULT_OG_IMAGE,
+              width: 512,
+              height: 512,
+            },
+          },
+          {
+            '@type': 'WebSite',
+            name: SITE_NAME,
+            url: homeCanonicalUrl(),
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: `${homeCanonicalUrl()}search?q={search_term_string}`,
+              'query-input': 'required name=search_term_string',
+            },
+          },
+        ],
+      })}</script>
     </Helmet>
   );
 }
@@ -47,6 +74,45 @@ export function ArticleSocialMetaHelmet({ article, articleId }) {
   const title = article.title?.trim() || HOME_TITLE;
   const description = articleShareDescription(article);
   const image = articleShareImage(article);
+  const datePublished = article.created_at || undefined;
+  const dateModified = article.updated_at || article.created_at || undefined;
+  const articleBody = String(article.content || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'NewsArticle',
+        headline: title,
+        description,
+        image: [image],
+        datePublished,
+        dateModified,
+        author: { '@type': 'Organization', name: article.author || SITE_NAME },
+        publisher: {
+          '@type': 'NewsMediaOrganization',
+          name: SITE_NAME,
+          logo: {
+            '@type': 'ImageObject',
+            url: DEFAULT_OG_IMAGE,
+            width: 512,
+            height: 512,
+          },
+        },
+        articleSection: article.category || undefined,
+        keywords: article.tags || undefined,
+        articleBody: articleBody || undefined,
+        mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: SITE_NAME, item: homeCanonicalUrl() },
+          article.category ? { '@type': 'ListItem', position: 2, name: article.category } : undefined,
+          { '@type': 'ListItem', position: article.category ? 3 : 2, name: title, item: canonical },
+        ].filter(Boolean),
+      },
+    ],
+  };
 
   return (
     <Helmet prioritizeSeoTags>
@@ -67,6 +133,7 @@ export function ArticleSocialMetaHelmet({ article, articleId }) {
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image} />
+      <script type="application/ld+json">{JSON.stringify(articleJsonLd)}</script>
     </Helmet>
   );
 }

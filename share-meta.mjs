@@ -142,19 +142,39 @@ function buildShareHeadTags({ title, description, canonical, image, type, publis
     ? `
     <script type="application/ld+json">${JSON.stringify({
       '@context': 'https://schema.org',
-      '@type': 'NewsArticle',
-      headline: title,
-      description,
-      image: [image],
-      datePublished: publishedTime || undefined,
-      dateModified: modifiedTime || publishedTime || undefined,
-      author: { '@type': 'Person', name: article.author || SITE_NAME },
-      publisher: {
-        '@type': 'NewsMediaOrganization',
-        name: SITE_NAME,
-        logo: { '@type': 'ImageObject', url: absoluteUrl(DEFAULT_SITE_ORIGIN, '/favicon-512.png') },
-      },
-      mainEntityOfPage: canonical,
+      '@graph': [
+        {
+          '@type': 'NewsArticle',
+          headline: title,
+          description,
+          image: [image],
+          datePublished: publishedTime || undefined,
+          dateModified: modifiedTime || publishedTime || undefined,
+          author: { '@type': 'Organization', name: article.author || SITE_NAME },
+          publisher: {
+            '@type': 'NewsMediaOrganization',
+            name: SITE_NAME,
+            logo: {
+              '@type': 'ImageObject',
+              url: absoluteUrl(DEFAULT_SITE_ORIGIN, '/favicon-512.png'),
+              width: 512,
+              height: 512,
+            },
+          },
+          articleSection: article.category || undefined,
+          keywords: article.tags || undefined,
+          articleBody: String(article.content || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || undefined,
+          mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+        },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: SITE_NAME, item: DEFAULT_SITE_ORIGIN + '/' },
+            article.category ? { '@type': 'ListItem', position: 2, name: article.category } : undefined,
+            { '@type': 'ListItem', position: article.category ? 3 : 2, name: title, item: canonical },
+          ].filter(Boolean),
+        },
+      ],
     }).replace(/</g, '\\u003c')}</script>`
     : '';
 
@@ -212,7 +232,7 @@ export async function fetchArticleById(articleId, { supabaseUrl, supabaseKey }) 
   const url = new URL(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/articles`);
   url.searchParams.set('id', `eq.${articleId}`);
   url.searchParams.set('is_published', 'eq.true');
-  url.searchParams.set('select', 'id,title,caption,content,image_url,video_url,author,category,created_at');
+  url.searchParams.set('select', 'id,title,caption,content,image_url,video_url,author,category,tags,created_at');
 
   const response = await fetch(url.toString(), {
     headers: {
