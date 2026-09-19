@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Helmet, HelmetProvider } from 'react-helmet-async';
+import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter, Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Clock3, Download, Facebook, Instagram, Mail, MapPin, Newspaper, Phone, Search, Twitter, X, Youtube } from 'lucide-react';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -8,6 +8,10 @@ import { getArticles, getEPapers, getLatestPublishedArticles, getTicker } from '
 import Login from './pages/Login';
 import AdminPage from './pages/Admin';
 import ArticleDetail from './pages/ArticleDetail';
+import PublicationInfo from './pages/PublicationInfo';
+import ManagedMeta from './components/ManagedMeta';
+import { publicationPages } from '../publication-info.mjs';
+import { sectionMetadata } from '../share-meta.mjs';
 import { HomeSocialMetaHelmet } from './components/SocialShareMeta';
 import { searchArticles } from './lib/search';
 import { HOME_DESCRIPTION, HOME_TITLE, SITE_NAME, SITE_ORIGIN, absoluteUrl } from './lib/siteMeta';
@@ -115,6 +119,7 @@ function AppShell() {
           <Route path="/category/:slug" element={<CategoryPage articles={siteArticles} latestArticles={latestSidebarArticles} />} />
           <Route path="/videos" element={<VideosPage articles={siteArticles} latestArticles={latestSidebarArticles} />} />
           <Route path="/article/:id" element={<ArticleDetail />} />
+          {Object.keys(publicationPages).map((pathname) => <Route key={pathname} path={pathname} element={<PublicationInfo pathname={pathname} />} />)}
           <Route path="/search" element={<SearchPage articles={siteArticles} latestArticles={latestSidebarArticles} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
@@ -149,29 +154,30 @@ function AdminRoute() {
 
 function AppShellOtherRoutesMetaHelmet() {
   const { pathname } = useLocation();
-  if (pathname === '/' || pathname.startsWith('/article/')) return null;
+  if (pathname === '/' || pathname.startsWith('/article/') || publicationPages[pathname]) return null;
+  const metadata = sectionMetadata(pathname) || { title: HOME_TITLE, description: HOME_DESCRIPTION };
 
   const canonical = `${SITE_ORIGIN}${pathname.startsWith('/') ? pathname : `/${pathname}`}`;
   const ogImage = absoluteUrl('/favicon-512.png');
 
   return (
-    <Helmet prioritizeSeoTags>
-      <title>{HOME_TITLE}</title>
-      <meta name="description" content={HOME_DESCRIPTION} />
+    <ManagedMeta robots={pathname === '/search' ? 'noindex, follow' : undefined}>
+      <title>{metadata.title}</title>
+      <meta name="description" content={metadata.description} />
       <link rel="canonical" href={canonical} />
 
-      <meta property="og:title" content={HOME_TITLE} />
-      <meta property="og:description" content={HOME_DESCRIPTION} />
+      <meta property="og:title" content={metadata.title} />
+      <meta property="og:description" content={metadata.description} />
       <meta property="og:image" content={ogImage} />
       <meta property="og:url" content={canonical} />
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content={SITE_NAME} />
 
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={HOME_TITLE} />
-      <meta name="twitter:description" content={HOME_DESCRIPTION} />
+      <meta name="twitter:title" content={metadata.title} />
+      <meta name="twitter:description" content={metadata.description} />
       <meta name="twitter:image" content={ogImage} />
-    </Helmet>
+    </ManagedMeta>
   );
 }
 
@@ -313,7 +319,7 @@ function EPaperPopup({ epaper, onClose }) {
   return <div className="modal"><div className="popup"><button className="close" onClick={onClose}><X /></button><h2>{epaper.title}</h2><img src={epaper.image_url || '/epaper-cover.svg'} /><a className="download" href={epaper.pdf_url || '#'}><Download /> PDF डाउनलोड करें</a></div></div>;
 }
 function Footer() {
-  return <footer><div><h2>सत्यजय टाइम्स</h2><p>सत्य का प्रहरी आपके हाथ</p></div><div><p><MapPin />5 आर-1 (प्रथम तल), HDFC बैंक B.K. चौक NIT, फरीदाबाद</p><p><Phone />9811232533</p><p><Mail />sjtfaridabad@gmail.com</p><div className="socials">{socialLinks.map(([label, href, Icon]) => <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label}><Icon /></a>)}</div></div></footer>;
+  return <footer><div><h2>सत्यजय टाइम्स</h2><p>सत्य का प्रहरी आपके हाथ</p><div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px' }}>{Object.entries(publicationPages).map(([path, page]) => <Link key={path} to={path} style={{ color: 'inherit' }}>{page.heading}</Link>)}</div></div><div><p><MapPin />5 आर-1 (प्रथम तल), HDFC बैंक B.K. चौक NIT, फरीदाबाद</p><p><Phone />+91 9643311765</p><p><Mail />sjtfaridabad@gmail.com</p><div className="socials">{socialLinks.map(([label, href, Icon]) => <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label}><Icon /></a>)}</div></div></footer>;
 }
 
 createRoot(document.getElementById('root')).render(

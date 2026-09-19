@@ -18,7 +18,7 @@ test('paginates past an upstream row cap and requests only published articles', 
   assert.deepEqual(offsets, [0, 1, 2]);
   assert.ok(xml.includes(`/article/${firstId}`));
   assert.ok(xml.includes(`/article/${secondId}`));
-  assert.equal((xml.match(/<loc>/g) || []).length, 10);
+  assert.equal((xml.match(/<loc>/g) || []).length, 14);
   assert.ok(!xml.includes('<lastmod>'));
 });
 
@@ -44,7 +44,7 @@ test('returns a retryable failure instead of a partial sitemap', async () => {
 
 test('handles an empty publication and rejects invalid upstream data', async () => {
   const empty = await createSitemap({}, async () => response([]));
-  assert.equal((empty.match(/<loc>/g) || []).length, 8);
+  assert.equal((empty.match(/<loc>/g) || []).length, 12);
   for (const invalid of [{ error: 'bad response' }, [{ id: '../bad' }]]) {
     const result = await onRequestGet({ env: {} }, async () => response(invalid));
     assert.equal(result.status, 503);

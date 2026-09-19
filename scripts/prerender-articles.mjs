@@ -5,6 +5,7 @@ import {
   fetchAllPublishedArticles,
   getSiteOrigin,
   injectHeadMeta,
+  injectArticleContent,
 } from '../share-meta.mjs';
 
 const distDir = resolve(process.cwd(), 'dist');
@@ -34,7 +35,7 @@ async function main() {
       articleId: article.id,
       article,
     });
-    const html = injectHeadMeta(template, meta);
+    const html = injectArticleContent(injectHeadMeta(template, meta), { siteOrigin, article });
     const outDir = resolve(distDir, 'article', article.id);
     mkdirSync(outDir, { recursive: true });
     writeFileSync(resolve(outDir, 'index.html'), html, 'utf8');

@@ -7,6 +7,19 @@ export const HOME_DESCRIPTION =
 
 export const DEFAULT_SITE_ORIGIN = 'https://satyajaytimes.com';
 
+const SECTION_NAMES = {
+  faridabad: 'फरीदाबाद', haryana: 'हरियाणा', cricket: 'क्रिकेट',
+  manoranjan: 'मनोरंजन', rashtriya: 'राष्ट्रीय', antarrashtriya: 'अंतर्राष्ट्रीय',
+};
+
+export function sectionMetadata(pathname) {
+  const name = pathname === '/videos' ? 'वीडियो न्यूज़' : SECTION_NAMES[pathname.replace(/^\/category\//, '')];
+  return name ? {
+    title: `${name} की ताज़ा खबरें | ${SITE_NAME}`,
+    description: `${SITE_NAME} पर ${name} की ताज़ा हिंदी खबरें और समाचार पढ़ें।`,
+  } : null;
+}
+
 export function getSiteOrigin(envSiteUrl) {
   const raw = envSiteUrl || DEFAULT_SITE_ORIGIN;
   return String(raw).replace(/\/$/, '');
@@ -112,7 +125,29 @@ export function buildArticleNotFoundHeadTags({ siteOrigin, articleId }) {
     canonical,
     image,
     type: 'article',
+    robots: 'noindex, follow',
   });
+}
+
+export function articleStructuredData({ siteOrigin, articleId, article }) {
+  const authorName = article.author?.trim() || SITE_NAME;
+  const organization = /^(satyajay\s*times|सत्यजय टाइम्स)$/i.test(authorName);
+  return {
+    '@context': 'https://schema.org', '@type': 'NewsArticle',
+    headline: article.title?.trim() || HOME_TITLE,
+    description: articleShareDescription(article),
+    image: [articleShareImage(siteOrigin, article)],
+    datePublished: article.created_at || undefined,
+    dateModified: article.updated_at || article.created_at || undefined,
+    author: { '@type': organization ? 'Organization' : 'Person', name: authorName,
+      ...(organization ? { url: `${siteOrigin}/about` } : {}) },
+    publisher: {
+      '@type': 'NewsMediaOrganization', name: SITE_NAME, url: siteOrigin,
+      logo: { '@type': 'ImageObject', url: absoluteUrl(siteOrigin, '/favicon-512.png') },
+    },
+    isAccessibleForFree: true, inLanguage: 'hi',
+    mainEntityOfPage: `${siteOrigin}/article/${articleId}`,
+  };
 }
 
 function buildGoogleBasicSubscriptionsTags() {
@@ -130,7 +165,7 @@ function buildGoogleBasicSubscriptionsTags() {
     </script>`;
 }
 
-function buildShareHeadTags({ title, description, canonical, image, type, publishedTime, modifiedTime, article }) {
+function buildShareHeadTags({ title, description, canonical, image, type, publishedTime, modifiedTime, article, robots = 'index, follow, max-image-preview:large' }) {
   const e = escapeHtml;
 
   const articleDateTags = type === 'article' && publishedTime
@@ -140,27 +175,14 @@ function buildShareHeadTags({ title, description, canonical, image, type, publis
     : '';
   const articleJsonLd = type === 'article' && article
     ? `
-    <script type="application/ld+json">${JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'NewsArticle',
-      headline: title,
-      description,
-      image: [image],
-      datePublished: publishedTime || undefined,
-      dateModified: modifiedTime || publishedTime || undefined,
-      author: { '@type': 'Person', name: article.author || SITE_NAME },
-      publisher: {
-        '@type': 'NewsMediaOrganization',
-        name: SITE_NAME,
-        logo: { '@type': 'ImageObject', url: absoluteUrl(DEFAULT_SITE_ORIGIN, '/favicon-512.png') },
-      },
-      mainEntityOfPage: canonical,
-    }).replace(/</g, '\\u003c')}</script>`
+    <script data-server-meta="true" type="application/ld+json">${JSON.stringify(articleStructuredData({
+      siteOrigin: new URL(canonical).origin, articleId: article.id, article,
+    })).replace(/</g, '\\u003c')}</script>`
     : '';
 
   return `    <title>${e(title)}</title>
     <meta name="description" content="${e(description)}" />
-    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="robots" content="${e(robots)}" />
     <meta name="theme-color" content="#c0392b" />
     <link rel="icon" type="image/png" sizes="512x512" href="${e(absoluteUrl(DEFAULT_SITE_ORIGIN, '/favicon-512.png'))}" />
     <link rel="apple-touch-icon" href="${e(absoluteUrl(DEFAULT_SITE_ORIGIN, '/favicon-512.png'))}" />
@@ -203,11 +225,35 @@ export function injectHeadMeta(html, metaHeadInner) {
 ${metaHeadInner}
 ${assetTags ? `\n${assetTags}` : ''}
   </head>`;
-  return html.replace(/<head[\s\S]*?<\/head>/i, head);
+  return html.replace(/<head[\s\S]*?<\/head>/i, () => markServerMetadata(head));
+}
+
+export function buildSectionHeadTags({ siteOrigin, pathname }) {
+  const metadata = sectionMetadata(pathname);
+  if (!metadata) return null;
+  return buildShareHeadTags({ ...metadata, canonical: siteOrigin + pathname,
+    image: absoluteUrl(siteOrigin, '/favicon-512.png'), type: 'website' });
+}
+
+export function buildPageHeadTags({ siteOrigin, pathname, title, description }) {
+  return buildShareHeadTags({ title, description, canonical: siteOrigin + pathname,
+    image: absoluteUrl(siteOrigin, '/favicon-512.png'), type: 'website' });
+}
+
+export function markServerMetadata(html) {
+  return html.replace(/<(title|meta|link)\b[^>]*>/gi, (tag, name) => {
+    const managed = name.toLowerCase() === 'title'
+      || /\bname=["'](?:description|robots|twitter:[^"']+)["']/i.test(tag)
+      || /\bproperty=["'](?:og:|article:)[^"']+["']/i.test(tag)
+      || /\brel=["']canonical["']/i.test(tag);
+    return managed && !tag.includes('data-server-meta')
+      ? tag.replace(/^<\w+/, '$& data-server-meta="true"') : tag;
+  });
 }
 
 export async function fetchArticleById(articleId, { supabaseUrl, supabaseKey }) {
-  if (!supabaseUrl || !supabaseKey || !articleId) return null;
+  if (!articleId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(articleId)) return null;
+  if (!supabaseUrl || !supabaseKey) throw new Error('Article service is not configured');
 
   const url = new URL(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/articles`);
   url.searchParams.set('id', `eq.${articleId}`);
@@ -215,14 +261,16 @@ export async function fetchArticleById(articleId, { supabaseUrl, supabaseKey }) 
   url.searchParams.set('select', 'id,title,caption,content,image_url,video_url,author,category,created_at');
 
   const response = await fetch(url.toString(), {
+    signal: AbortSignal.timeout(10000),
     headers: {
       apikey: supabaseKey,
       Authorization: `Bearer ${supabaseKey}`,
     },
   });
 
-  if (!response.ok) return null;
+  if (!response.ok) throw new Error('Article service is unavailable');
   const rows = await response.json();
+  if (!Array.isArray(rows)) throw new Error('Invalid article response');
   return rows?.[0] || null;
 }
 
@@ -247,5 +295,28 @@ export async function fetchAllPublishedArticles({ supabaseUrl, supabaseKey }) {
 
 export async function buildArticleHtmlFromTemplate(html, { siteOrigin, articleId, article }) {
   const meta = buildArticleHeadTags({ siteOrigin, articleId, article });
-  return injectHeadMeta(html, meta);
+  return injectArticleContent(injectHeadMeta(html, meta), { siteOrigin, article });
+}
+
+export function injectArticleContent(html, { siteOrigin, article }) {
+  const e = escapeHtml;
+  const date = new Date(article.created_at);
+  const published = Number.isNaN(date.getTime()) ? '' : `<time datetime="${e(date.toISOString())}">${e(new Intl.DateTimeFormat('hi-IN', {
+    day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata',
+  }).format(date))} IST</time>`;
+  const paragraphs = String(article.content || '').replace(/\r\n?/g, '\n').split(/\n{2,}/)
+    .filter((paragraph) => paragraph.trim()).map((paragraph) => `<p style="white-space:pre-line">${e(paragraph)}</p>`).join('\n');
+  const content = `<main><section class="page-grid" style="grid-template-columns:1fr"><article class="card">
+    <img src="${e(articleShareImage(siteOrigin, article))}" alt="${e(article.title)}" />
+    <div><a href="/">${e(SITE_NAME)}</a><p class="category">${e(article.category || '')}</p>
+    <h1>${e(article.title)}</h1>${article.caption ? `<p class="story-caption">${e(article.caption)}</p>` : ''}
+    <small>${published}${article.author ? ` · ${e(article.author)}` : ''}</small>
+    <div class="article-content">${paragraphs}</div></div>
+    </article></section></main>`;
+  const bootstrap = JSON.stringify(article).replace(/</g, '\\u003c');
+  return html.replace(/<div id="root"><\/div>/, () => `<div id="root">${content}</div><script id="sjt-article-data" type="application/json">${bootstrap}</script>`);
+}
+
+export function injectMissingArticle(html) {
+  return html.replace(/<div id="root"><\/div>/, '<div id="root"><main><p>यह खबर उपलब्ध नहीं है।</p><a href="/">होम पेज पर जाएँ</a></main></div>');
 }

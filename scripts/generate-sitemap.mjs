@@ -1,6 +1,7 @@
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fetchAllPublishedArticles, getSiteOrigin } from '../share-meta.mjs';
+import { publicationPages } from '../publication-info.mjs';
 
 const siteOrigin = getSiteOrigin(process.env.VITE_SITE_URL);
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -29,6 +30,7 @@ const staticPaths = [
   ['/category/rashtriya', '0.8'],
   ['/category/antarrashtriya', '0.8'],
   ['/videos', '0.7'],
+  ...Object.keys(publicationPages).map((path) => [path, '0.5']),
 ];
 
 const entries = staticPaths.map(([pathname, priority]) => urlEntry(siteOrigin + pathname, null, priority));

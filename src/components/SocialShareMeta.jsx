@@ -1,8 +1,10 @@
-import { Helmet } from 'react-helmet-async';
+import ManagedMeta from './ManagedMeta';
+import { articleStructuredData } from '../../share-meta.mjs';
 import {
   HOME_DESCRIPTION,
   HOME_TITLE,
   SITE_NAME,
+  SITE_ORIGIN,
   absoluteUrl,
   articleCanonicalUrl,
   articleShareDescription,
@@ -16,10 +18,9 @@ export function HomeSocialMetaHelmet() {
   const canonical = homeCanonicalUrl();
 
   return (
-    <Helmet prioritizeSeoTags>
+    <ManagedMeta>
       <title>{HOME_TITLE}</title>
       <meta name="description" content={HOME_DESCRIPTION} />
-      <meta name="robots" content="index, follow, max-image-preview:large" />
       <meta name="theme-color" content="#c0392b" />
       <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
       <link rel="apple-touch-icon" href="/favicon-512.png" />
@@ -36,7 +37,7 @@ export function HomeSocialMetaHelmet() {
       <meta name="twitter:title" content={HOME_TITLE} />
       <meta name="twitter:description" content={HOME_DESCRIPTION} />
       <meta name="twitter:image" content={DEFAULT_OG_IMAGE} />
-    </Helmet>
+    </ManagedMeta>
   );
 }
 
@@ -49,7 +50,7 @@ export function ArticleSocialMetaHelmet({ article, articleId }) {
   const image = articleShareImage(article);
 
   return (
-    <Helmet prioritizeSeoTags>
+    <ManagedMeta>
       <title>{title}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={canonical} />
@@ -67,6 +68,7 @@ export function ArticleSocialMetaHelmet({ article, articleId }) {
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image} />
-    </Helmet>
+      <script type="application/ld+json">{JSON.stringify(articleStructuredData({ siteOrigin: SITE_ORIGIN, articleId, article })).replace(/</g, '\\u003c')}</script>
+    </ManagedMeta>
   );
 }

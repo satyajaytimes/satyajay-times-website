@@ -7,6 +7,8 @@ import {
   fetchArticleById,
   getSiteOrigin,
   injectHeadMeta,
+  injectArticleContent,
+  markServerMetadata,
 } from './share-meta.mjs';
 
 function articleMetaDevPlugin(env) {
@@ -38,6 +40,7 @@ function articleMetaDevPlugin(env) {
           let html = readFileSync(indexPath, 'utf8');
           const meta = buildArticleHeadTags({ siteOrigin, articleId, article });
           html = injectHeadMeta(html, meta);
+          html = injectArticleContent(html, { siteOrigin, article });
 
           res.statusCode = 200;
           res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -54,6 +57,6 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
-    plugins: [react(), articleMetaDevPlugin(env)],
+    plugins: [react(), articleMetaDevPlugin(env), { name: 'server-meta-ownership', transformIndexHtml: markServerMetadata }],
   };
 });

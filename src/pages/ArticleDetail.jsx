@@ -4,11 +4,21 @@ import { ArticleSocialMetaHelmet } from '../components/SocialShareMeta';
 import VideoEmbed, { getArticleVideoUrl } from '../components/VideoEmbed';
 import { getArticleById, getRelatedArticles } from '../lib/api';
 import { formatRelativeTime, getArticleTimestamp } from '../lib/time';
+import ManagedMeta from '../components/ManagedMeta';
+
+function initialArticle(id) {
+  try {
+    const article = JSON.parse(document.getElementById('sjt-article-data')?.textContent || 'null');
+    return article?.id === id ? article : null;
+  } catch {
+    return null;
+  }
+}
 
 export default function ArticleDetail() {
   const { id } = useParams();
-  const [article, setArticle] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [article, setArticle] = useState(() => initialArticle(id));
+  const [loading, setLoading] = useState(() => !initialArticle(id));
   const [notFound, setNotFound] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [relatedArticles, setRelatedArticles] = useState([]);
@@ -18,10 +28,11 @@ export default function ArticleDetail() {
     let cancelled = false;
 
     async function load() {
-      setLoading(true);
+      const initial = initialArticle(id);
+      setLoading(!initial);
       setNotFound(false);
       setLoadError(false);
-      setArticle(null);
+      setArticle(initial);
       setRelatedArticles([]);
 
       try {
@@ -29,6 +40,7 @@ export default function ArticleDetail() {
         if (cancelled) return;
         if (data) {
           setArticle(data);
+          setLoading(false);
           try {
             const related = await getRelatedArticles({ articleId: id, category: data.category, limit: 4 });
             if (!cancelled) setRelatedArticles(related);
@@ -61,6 +73,9 @@ export default function ArticleDetail() {
   if (notFound || !article) {
     return (
       <section className="page-grid">
+        <ManagedMeta robots={loadError ? 'index, follow' : 'noindex, follow'}>
+          <title>{loadError ? 'खबर लोड नहीं हो सकी | सत्यजय टाइम्स' : 'लेख नहीं मिला | सत्यजय टाइम्स'}</title>
+        </ManagedMeta>
         <p className="empty-state">
           {loadError ? 'खबर लोड नहीं हो सकी, कृपया दोबारा खोलें।' : 'यह खबर उपलब्ध नहीं है।'}
         </p>
@@ -70,7 +85,7 @@ export default function ArticleDetail() {
 
   const timestamp = getArticleTimestamp(article);
   const publishDate = timestamp
-    ? new Intl.DateTimeFormat('hi-IN', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(timestamp))
+    ? new Intl.DateTimeFormat('hi-IN', { day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }).format(new Date(timestamp))
     : '';
   const relativeTime = formatRelativeTime(timestamp);
   const videoUrl = getArticleVideoUrl(article);
@@ -98,14 +113,14 @@ export default function ArticleDetail() {
             {article.caption ? <p className="story-caption">{article.caption}</p> : null}
             <small>
               {relativeTime ? `◷ ${relativeTime}` : ''}
-              {publishDate ? ` • ${publishDate}` : ''}
+              {publishDate ? <> • <time dateTime={timestamp}>{publishDate} IST</time></> : null}
               {article.author ? ` ➻ ${article.author}` : ''}
             </small>
             <div className="article-actions">
               <button type="button" onClick={copyArticleLink}>{copied ? 'लिंक कॉपी हो गया' : 'लिंक कॉपी करें'}</button>
             </div>
             {videoUrl ? <VideoEmbed url={videoUrl} /> : null}
-            {article.content ? <div>{article.content}</div> : null}
+            {article.content ? <div className="article-content">{String(article.content).replace(/\r\n?/g, '\n').split(/\n{2,}/).filter((paragraph) => paragraph.trim()).map((paragraph, index) => <p key={index} style={{ whiteSpace: 'pre-line' }}>{paragraph}</p>)}</div> : null}
           </div>
         </article>
         {relatedArticles.length ? (
