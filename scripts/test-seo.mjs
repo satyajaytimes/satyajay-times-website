@@ -26,6 +26,19 @@ test('article HTML contains escaped readable content and preserves application a
   assert.equal((html.match(/<title\b/g) || []).length, 1);
 });
 
+test('AdSense verification survives server metadata rendering without loading ads', () => {
+  const source = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const tag = '<meta name="google-adsense-account" content="ca-pub-7553279029649447" />';
+  assert.ok(source.includes(tag));
+  for (const meta of [buildArticleHeadTags({ siteOrigin, articleId: id, article }), buildSectionHeadTags({ siteOrigin, pathname: '/about' })]) {
+    const html = injectHeadMeta(source, meta);
+    assert.ok(html.includes(tag));
+    assert.equal((html.match(/name="google-adsense-account"/g) || []).length, 1);
+    assert.ok(!html.includes('pagead2.googlesyndication.com/pagead/js/adsbygoogle.js'));
+  }
+  assert.equal(readFileSync(new URL('../public/ads.txt', import.meta.url), 'utf8').trim(), 'google.com, pub-7553279029649447, DIRECT, f08c47fec0942fa0');
+});
+
 test('metadata has explicit ownership, correct section canonical, and organization byline', () => {
   const html = injectHeadMeta(template, buildSectionHeadTags({ siteOrigin, pathname: '/category/haryana' }));
   assert.match(html, /href="https:\/\/satyajaytimes.com\/category\/haryana"/);

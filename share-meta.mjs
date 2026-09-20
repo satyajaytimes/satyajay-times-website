@@ -218,11 +218,13 @@ export function injectHeadMeta(html, metaHeadInner) {
   const stylesheets = existingHead.match(/<link\b[^>]*rel=["\']stylesheet["\'][^>]*>/gi) || [];
   const modulePreloads = existingHead.match(/<link\b[^>]*rel=["\']modulepreload["\'][^>]*>/gi) || [];
   const assetTags = [...modulePreloads, ...moduleScripts, ...stylesheets].join('\n');
+  const adsenseTag = existingHead.match(/<meta\b[^>]*\bname=["']google-adsense-account["'][^>]*>/i)?.[0] || '';
 
   const head = `<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 ${metaHeadInner}
+${adsenseTag}
 ${assetTags ? `\n${assetTags}` : ''}
   </head>`;
   return html.replace(/<head[\s\S]*?<\/head>/i, () => markServerMetadata(head));
