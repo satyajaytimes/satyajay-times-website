@@ -140,7 +140,7 @@ export function articleStructuredData({ siteOrigin, articleId, article }) {
     datePublished: article.created_at || undefined,
     dateModified: article.updated_at || article.created_at || undefined,
     author: { '@type': organization ? 'Organization' : 'Person', name: authorName,
-      ...(organization ? { url: `${siteOrigin}/about` } : {}) },
+      ...(organization ? { url: siteOrigin } : {}) },
     publisher: {
       '@type': 'NewsMediaOrganization', name: SITE_NAME, url: siteOrigin,
       logo: { '@type': 'ImageObject', url: absoluteUrl(siteOrigin, '/favicon-512.png') },

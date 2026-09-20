@@ -5,6 +5,7 @@ import { buildArticleHeadTags, buildArticleNotFoundHeadTags, injectHeadMeta, inj
 import { createNewsSitemap } from '../functions/news-sitemap.xml.js';
 import { onRequestGet as articleRoute } from '../functions/article/[id].js';
 import { servePublicPage } from '../page-response.mjs';
+import { createSitemap } from '../functions/sitemap.xml.js';
 
 const siteOrigin = 'https://satyajaytimes.com';
 const id = '00000000-0000-0000-0000-000000000001';
@@ -30,7 +31,7 @@ test('AdSense verification survives server metadata rendering without loading ad
   const source = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const tag = '<meta name="google-adsense-account" content="ca-pub-7553279029649447" />';
   assert.ok(source.includes(tag));
-  for (const meta of [buildArticleHeadTags({ siteOrigin, articleId: id, article }), buildSectionHeadTags({ siteOrigin, pathname: '/about' })]) {
+  for (const meta of [buildArticleHeadTags({ siteOrigin, articleId: id, article }), buildSectionHeadTags({ siteOrigin, pathname: '/category/haryana' })]) {
     const html = injectHeadMeta(source, meta);
     assert.ok(html.includes(tag));
     assert.equal((html.match(/name="google-adsense-account"/g) || []).length, 1);
@@ -60,13 +61,26 @@ test('missing article is 404 but database outage is retryable 503', async (t) =>
   assert.equal(failure.headers.get('cache-control'), 'no-store');
 });
 
-test('information pages expose verified owner and contact in initial HTML', async () => {
-  const response = await servePublicPage({ request: new Request(siteOrigin + '/about'), env: { ASSETS: { fetch: async () => new Response(template) } } });
-  const html = await response.text();
-  assert.equal(response.status, 200);
-  assert.match(html, /Rupesh Kumar Bansal/);
-  assert.match(html, /9643311765/);
-  assert.match(html, /<h1>हमारे बारे में<\/h1>/);
+test('removed information pages return 404 and are absent from the sitemap', async () => {
+  const xml = await createSitemap({}, async () => new Response('[]'));
+  for (const path of ['/about', '/contact', '/editorial-policy', '/privacy']) {
+    for (const suffix of ['', '/']) {
+      const response = await servePublicPage({ request: new Request(siteOrigin + path + suffix), env: {} });
+      assert.equal(response.status, 404);
+    }
+    assert.ok(!xml.includes(siteOrigin + path));
+  }
+  assert.equal(articleStructuredData({ siteOrigin, articleId: id, article }).author.url, siteOrigin);
+});
+
+test('category and video pages still serve their metadata and application', async () => {
+  for (const path of ['/category/haryana', '/videos']) {
+    const response = await servePublicPage({ request: new Request(siteOrigin + path), env: { ASSETS: { fetch: async () => new Response(template) } } });
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    assert.ok(html.includes(siteOrigin + path));
+    assert.ok(html.includes('/assets/app.js'));
+  }
 });
 
 test('news sitemap excludes old/future articles and escapes the headline', async () => {

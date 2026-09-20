@@ -1,5 +1,3 @@
-import { publicationPages } from '../publication-info.mjs';
-
 const SITE_ORIGIN = 'https://satyajaytimes.com';
 const STATIC_PATHS = [
   '/',
@@ -10,7 +8,6 @@ const STATIC_PATHS = [
   '/category/rashtriya',
   '/category/antarrashtriya',
   '/videos',
-  ...Object.keys(publicationPages),
 ];
 const PAGE_SIZE = 500;
 const MAX_ARTICLES = 50000 - STATIC_PATHS.length;
