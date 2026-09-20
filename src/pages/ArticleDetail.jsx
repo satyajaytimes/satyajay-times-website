@@ -105,9 +105,9 @@ export default function ArticleDetail() {
     <>
       <ArticleSocialMetaHelmet article={article} articleId={id} key={article?.id || id} />
       <section className="page-grid" style={{ gridTemplateColumns: '1fr' }}>
-        <article className="card">
+        <article className="card article-detail">
           <img src={article.image_url || '/news-images/faridabad.svg'} alt={article.title} />
-          <div>
+          <div className="article-reading">
             <p className="category">{article.category}</p>
             <h1>{article.title}</h1>
             {article.caption ? <p className="story-caption">{article.caption}</p> : null}

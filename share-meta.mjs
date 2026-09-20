@@ -308,9 +308,9 @@ export function injectArticleContent(html, { siteOrigin, article }) {
   }).format(date))} IST</time>`;
   const paragraphs = String(article.content || '').replace(/\r\n?/g, '\n').split(/\n{2,}/)
     .filter((paragraph) => paragraph.trim()).map((paragraph) => `<p style="white-space:pre-line">${e(paragraph)}</p>`).join('\n');
-  const content = `<main><section class="page-grid" style="grid-template-columns:1fr"><article class="card">
+  const content = `<main><section class="page-grid" style="grid-template-columns:1fr"><article class="card article-detail">
     <img src="${e(articleShareImage(siteOrigin, article))}" alt="${e(article.title)}" />
-    <div><a href="/">${e(SITE_NAME)}</a><p class="category">${e(article.category || '')}</p>
+    <div class="article-reading"><a href="/">${e(SITE_NAME)}</a><p class="category">${e(article.category || '')}</p>
     <h1>${e(article.title)}</h1>${article.caption ? `<p class="story-caption">${e(article.caption)}</p>` : ''}
     <small>${published}${article.author ? ` · ${e(article.author)}` : ''}</small>
     <div class="article-content">${paragraphs}</div></div>
