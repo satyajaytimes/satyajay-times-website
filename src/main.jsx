@@ -15,6 +15,7 @@ import { searchArticles } from './lib/search';
 import { HOME_DESCRIPTION, HOME_TITLE, SITE_NAME, SITE_ORIGIN, absoluteUrl } from './lib/siteMeta';
 import { formatRelativeTime, getArticleTimestamp } from './lib/time';
 import { formatWeatherLabel, useWeather } from './lib/weather';
+import { initializeWebPush } from './lib/webPush.mjs';
 import './style.css';
 
 const logo = '/satyajay-logo.jpg';
@@ -68,6 +69,13 @@ function AppShell() {
     seedArticles.filter((item) => item.is_published !== false).slice(0, 10),
   );
   const [tickers, setTickers] = useState(seedTickers);
+
+  useEffect(() => {
+    if (popup) return;
+    // Let the existing 600ms newspaper popup run before starting push prompts.
+    const timer = setTimeout(() => initializeWebPush(), 1500);
+    return () => clearTimeout(timer);
+  }, [popup]);
 
   useEffect(() => {
     const tick = setInterval(() => setNow(new Date()), 1000);
