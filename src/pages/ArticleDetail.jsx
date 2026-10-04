@@ -130,7 +130,7 @@ export default function ArticleDetail() {
               {relatedArticles.map((item) => (
                 <Link key={item.id} to={`/article/${item.id}`} className="related-card-link">
                   <article className="card">
-                    <img src={item.image_url || '/news-images/faridabad.svg'} alt={item.title} />
+                    <img src={item.image_url || '/news-images/faridabad.svg'} alt={item.title} loading="lazy" decoding="async" />
                     <div>
                       <h3>{item.title}</h3>
                       {item.caption ? <p className="caption">{item.caption}</p> : null}

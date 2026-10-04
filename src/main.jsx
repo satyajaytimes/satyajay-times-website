@@ -4,7 +4,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter, Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Clock3, Download, Facebook, Instagram, Mail, MapPin, Newspaper, Phone, Search, Twitter, X, Youtube } from 'lucide-react';
 import ProtectedRoute from './components/ProtectedRoute';
-import { getArticles, getEPapers, getLatestPublishedArticles, getTicker } from './lib/api';
+import { getPublishedArticles, getEPapers, getTicker } from './lib/api';
 import Login from './pages/Login';
 import AdminPage from './pages/Admin';
 import ArticleDetail from './pages/ArticleDetail';
@@ -83,26 +83,24 @@ function AppShell() {
   }, []);
 
   useEffect(() => {
-    async function loadPublicData() {
-      try {
-        const [articleRows, tickerRows, epaperRows, latestRows] = await Promise.all([
-          getArticles(),
-          getTicker(),
-          getEPapers(),
-          getLatestPublishedArticles(10),
-        ]);
-        const publishedArticles = articleRows.filter((item) => item.is_published !== false);
-        const activeTickers = tickerRows.filter((item) => item.is_active !== false);
-        const activeEPaper = epaperRows.find((item) => item.is_active) || epaperRows[0];
-        if (publishedArticles.length) setSiteArticles(publishedArticles);
-        setLatestSidebarArticles(latestRows);
-        if (activeTickers.length) setTickers(activeTickers);
-        if (activeEPaper) setEPaper(activeEPaper);
-      } catch (error) {
-        console.warn(error.message);
-      }
-    }
-    loadPublicData();
+    let cancelled = false;
+    const reportError = (error) => console.warn(error.message);
+    // Render each section as soon as its own request completes.
+    getPublishedArticles().then((articles) => {
+      if (cancelled) return;
+      setSiteArticles(articles);
+      setLatestSidebarArticles(articles.slice(0, 10));
+    }).catch(reportError);
+    getTicker().then((rows) => {
+      if (cancelled) return;
+      setTickers(rows.filter((item) => item.is_active !== false));
+    }).catch(reportError);
+    getEPapers().then((rows) => {
+      if (cancelled) return;
+      const active = rows.find((item) => item.is_active) || rows[0];
+      if (active) setEPaper(active);
+    }).catch(reportError);
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -211,7 +209,16 @@ function VideosPage({ articles, latestArticles }) {
 function SearchPage({ articles, latestArticles }) {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
-  const results = useMemo(() => searchArticles(articles, query), [articles, query]);
+  const [searchableArticles, setSearchableArticles] = useState(null);
+  const [searchFailed, setSearchFailed] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    getPublishedArticles({ includeContent: true }).then((rows) => {
+      if (!cancelled) setSearchableArticles(rows);
+    }).catch(() => { if (!cancelled) setSearchFailed(true); });
+    return () => { cancelled = true; };
+  }, []);
+  const results = useMemo(() => searchArticles(searchableArticles || articles, query), [searchableArticles, articles, query]);
 
   return (
     <section className="page-grid">
@@ -226,7 +233,7 @@ function SearchPage({ articles, latestArticles }) {
             ))}
           </div>
         ) : (
-          <p className="empty-state">कोई परिणाम नहीं मिला</p>
+          <p className="empty-state">{searchableArticles ? 'कोई परिणाम नहीं मिला' : searchFailed ? 'पूरी खोज लोड नहीं हो सकी। कृपया दोबारा कोशिश करें।' : 'खोज जारी है...'}</p>
         )}
       </div>
       <aside className="latest">
@@ -310,7 +317,7 @@ function Card({ article, small }) {
   return (
     <Link to={`/article/${article.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
       <article className={small ? 'small-card' : 'card'}>
-        <img src={article.image_url || '/news-images/faridabad.svg'} alt={article.title || SITE_NAME} />
+        <img src={article.image_url || '/news-images/faridabad.svg'} alt={article.title || SITE_NAME} loading="lazy" decoding="async" />
         <div>
           <h3>{article.title}</h3>
           {article.caption ? <p className="caption">{article.caption}</p> : null}

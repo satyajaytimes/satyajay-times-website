@@ -33,6 +33,19 @@ export async function getArticles() {
   return data || [];
 }
 
+// Public lists do not need every article's full body. Search opts in to it.
+export async function getPublishedArticles({ includeContent = false } = {}) {
+  requireSupabase();
+  const fields = 'id,title,caption,image_url,video_url,author,category,created_at,is_breaking,is_featured,is_published';
+  const { data, error } = await supabase
+    .from('articles')
+    .select(includeContent ? '*' : fields)
+    .eq('is_published', true)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
 /** Latest published articles for the “ताज़ा खबरें” sidebar (newest first). */
 export async function getLatestPublishedArticles(limit = 10) {
   requireSupabase();
