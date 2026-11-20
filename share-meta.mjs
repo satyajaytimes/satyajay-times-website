@@ -12,6 +12,19 @@ export const SECTION_NAMES = {
   manoranjan: 'मनोरंजन', rashtriya: 'राष्ट्रीय', antarrashtriya: 'अंतर्राष्ट्रीय',
 };
 
+export function categoryPath(category) {
+  const slug = Object.keys(SECTION_NAMES).find((key) => SECTION_NAMES[key] === category);
+  return slug ? `/category/${slug}` : category === 'वीडियो न्यूज़' ? '/videos' : null;
+}
+
+export function articleShareLinks(siteOrigin, articleId, title) {
+  const canonical = `${siteOrigin}/article/${encodeURIComponent(articleId)}`;
+  return {
+    canonical,
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(`${title}\n${canonical}`)}`,
+  };
+}
+
 export function sectionMetadata(pathname) {
   const name = pathname === '/videos' ? 'वीडियो न्यूज़' : SECTION_NAMES[pathname.replace(/^\/category\//, '')];
   return name ? {
@@ -302,6 +315,7 @@ export async function buildArticleHtmlFromTemplate(html, { siteOrigin, articleId
 
 export function injectArticleContent(html, { siteOrigin, article }) {
   const e = escapeHtml;
+  const category = categoryPath(article.category);
   const date = new Date(article.created_at);
   const published = Number.isNaN(date.getTime()) ? '' : `<time datetime="${e(date.toISOString())}">${e(new Intl.DateTimeFormat('hi-IN', {
     day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata',
@@ -310,10 +324,10 @@ export function injectArticleContent(html, { siteOrigin, article }) {
     .filter((paragraph) => paragraph.trim()).map((paragraph) => `<p style="white-space:pre-line">${e(paragraph)}</p>`).join('\n');
   const content = `<main><section class="page-grid" style="grid-template-columns:1fr"><article class="card article-detail">
     <img src="${e(articleShareImage(siteOrigin, article))}" alt="${e(article.title)}" />
-    <div class="article-reading"><a href="/">${e(SITE_NAME)}</a><p class="category">${e(article.category || '')}</p>
+    <div class="article-reading"><nav class="article-breadcrumbs" aria-label="आप यहाँ हैं"><a href="/">होम</a>${category ? ` / <a href="${category}">${e(article.category)}</a>` : ''}</nav><p class="category">${e(article.category || '')}</p>
     <h1>${e(article.title)}</h1>${article.caption ? `<p class="story-caption">${e(article.caption)}</p>` : ''}
     <small>${published}${article.author ? ` · ${e(article.author)}` : ''}</small>
-    <div class="article-content">${paragraphs}</div></div>
+    <div class="article-content">${paragraphs}</div>${category ? `<p class="more-category"><a href="${category}">${e(article.category)} की और खबरें पढ़ें</a></p>` : ''}</div>
     </article></section></main>`;
   const bootstrap = JSON.stringify(article).replace(/</g, '\\u003c');
   return html.replace(/<div id="root"><\/div>/, () => `<div id="root">${content}</div><script id="sjt-article-data" type="application/json">${bootstrap}</script>`);

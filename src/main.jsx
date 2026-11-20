@@ -9,7 +9,7 @@ import Login from './pages/Login';
 import AdminPage from './pages/Admin';
 import ArticleDetail from './pages/ArticleDetail';
 import ManagedMeta from './components/ManagedMeta';
-import { sectionMetadata } from '../share-meta.mjs';
+import { sectionMetadata, categoryPath } from '../share-meta.mjs';
 import { HomeSocialMetaHelmet } from './components/SocialShareMeta';
 import { searchArticles } from './lib/search';
 import { HOME_DESCRIPTION, HOME_TITLE, SITE_NAME, SITE_ORIGIN, absoluteUrl } from './lib/siteMeta';
@@ -262,7 +262,7 @@ function NewsLayout({ articles, mainArticles, heading, latestArticles }) {
         {heading ? (
           visibleArticles.length ? <div className="cards">{visibleArticles.map((item) => <Card key={item.id} article={item} />)}</div> : <p className="empty-state">इस सेक्शन में अभी कोई खबर उपलब्ध नहीं है।</p>
         ) : ['फरीदाबाद', 'हरियाणा', 'राष्ट्रीय', 'अंतर्राष्ट्रीय', 'क्रिकेट', 'मनोरंजन'].map((cat) => (
-          <section key={cat}><h2 className="section-title">{cat}</h2><div className="cards">{articles.filter((item) => item.category === cat).slice(0, 6).map((item) => <Card key={item.id} article={item} />)}</div></section>
+          <section key={cat}><div className="section-heading"><h2 className="section-title">{cat}</h2><Link to={categoryPath(cat)}>सभी खबरें देखें</Link></div><div className="cards">{articles.filter((item) => item.category === cat).slice(0, 6).map((item) => <Card key={item.id} article={item} />)}</div></section>
         ))}
       </div>
       <aside className="latest">
