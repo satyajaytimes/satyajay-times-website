@@ -75,7 +75,7 @@ test('removed information pages return 404 and are absent from the sitemap', asy
 
 test('category and video pages still serve their metadata and application', async () => {
   for (const path of ['/category/haryana', '/videos']) {
-    const response = await servePublicPage({ request: new Request(siteOrigin + path), env: { ASSETS: { fetch: async () => new Response(template) } } });
+    const response = await servePublicPage({ request: new Request(siteOrigin + path), env: { ASSETS: { fetch: async () => new Response(template) } } }, async () => new Response('[]'));
     assert.equal(response.status, 200);
     const html = await response.text();
     assert.ok(html.includes(siteOrigin + path));

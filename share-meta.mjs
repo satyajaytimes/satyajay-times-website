@@ -7,7 +7,7 @@ export const HOME_DESCRIPTION =
 
 export const DEFAULT_SITE_ORIGIN = 'https://satyajaytimes.com';
 
-const SECTION_NAMES = {
+export const SECTION_NAMES = {
   faridabad: 'फरीदाबाद', haryana: 'हरियाणा', cricket: 'क्रिकेट',
   manoranjan: 'मनोरंजन', rashtriya: 'राष्ट्रीय', antarrashtriya: 'अंतर्राष्ट्रीय',
 };
